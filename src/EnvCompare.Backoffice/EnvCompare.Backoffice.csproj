@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Map RCL wwwroot to site root so /App_Plugins/EnvCompare/... is served. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>EnvCompare.Backoffice</RootNamespace>
+    <AssemblyName>EnvCompare.Backoffice</AssemblyName>
+    <PackageId>EnvCompare</PackageId>
+    <Product>EnvCompare</Product>
+    <Title>EnvCompare</Title>
+    <Version>0.1.0</Version>
+    <PackageVersion>0.1.0</PackageVersion>
+    <Description>Compare content between Umbraco Cloud environments from the backoffice.</Description>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>true</IsPackable>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <!-- Set to true to skip Vite build when iterating on C# only. -->
+    <SkipClientBuild Condition="'$(SkipClientBuild)' == ''">false</SkipClientBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Umbraco.Cms.Api.Common" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Client sources are built by Vite; do not pack them into the RCL. -->
+    <Content Remove="Client\**" />
+    <None Remove="Client\**" />
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+    <None Include="Client\package.json" Pack="false" />
+    <None Include="Client\vite.config.ts" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EnvCompare.Core\EnvCompare.Core.csproj" />
+    <ProjectReference Include="..\EnvCompare.Infrastructure\EnvCompare.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!--
+    Build Lit/Vite assets into wwwroot/App_Plugins/EnvCompare before static web assets are collected.
+    Requires Node.js/npm. Use -p:SkipClientBuild=true to skip.
+  -->
+  <Target Name="NpmInstallClient"
+          BeforeTargets="NpmBuildClient"
+          Condition="'$(SkipClientBuild)' != 'true' AND !Exists('$(MSBuildProjectDirectory)\Client\node_modules')">
+    <Message Importance="high" Text="EnvCompare: npm install (Client)" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm install" />
+  </Target>
+
+  <Target Name="NpmBuildClient"
+          BeforeTargets="ResolveProjectStaticWebAssets"
+          Condition="'$(SkipClientBuild)' != 'true'">
+    <Message Importance="high" Text="EnvCompare: npm run build (Client)" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm run build" />
+  </Target>
+
+</Project>
