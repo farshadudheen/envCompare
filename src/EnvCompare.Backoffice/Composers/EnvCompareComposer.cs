@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using EnvCompare.Backoffice.DependencyInjection;
+using EnvCompare.Infrastructure.Migrations;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Api.Management.OpenApi;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
+using Umbraco.Extensions;
 
 namespace EnvCompare.Backoffice.Composers;
 
@@ -22,6 +24,7 @@ public sealed class EnvCompareComposer : IComposer
     public void Compose(IUmbracoBuilder builder)
     {
         builder.AddEnvCompare();
+        builder.PackageMigrationPlans().Add<EnvCompareMigrationPlan>();
 
         builder.Services.AddSingleton<IOperationIdHandler, EnvCompareOperationIdHandler>();
 

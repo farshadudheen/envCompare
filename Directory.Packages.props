@@ -12,8 +12,7 @@
     <PackageVersion Include="Umbraco.Cms.Api.Management" Version="17.4.2" />
     <PackageVersion Include="Umbraco.Cms.Web.Common" Version="17.4.2" />
     <PackageVersion Include="Umbraco.Cms.Web.Website" Version="17.4.2" />
-    <PackageVersion Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="17.4.2" />
-    <PackageVersion Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
+    <PackageVersion Include="Umbraco.Cms.Infrastructure" Version="17.4.2" />
 
     <!-- Infrastructure (aligned with Umbraco.Cms.Core 17.4.2) -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.6" />
@@ -22,12 +21,5 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.6" />
-
-    <!-- Tests -->
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="NSubstitute" Version="5.3.0" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 </Project>

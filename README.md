@@ -1,55 +1,68 @@
 # EnvCompare
 
-Production-ready Umbraco 17 package for comparing content between Umbraco Cloud environments from the backoffice.
+Umbraco 17 NuGet package for comparing content between Umbraco Cloud environments from the backoffice.
+
+## Install
+
+Add the package to your Umbraco 17 site:
+
+```xml
+<PackageReference Include="EnvCompare" Version="0.1.0" />
+```
+
+The package auto-registers via `EnvCompareComposer` (`IUmbracoBuilder`). On first run, the package migration creates the `EnvComparePackageState` table to track installed version for future upgrades.
+
+Configure remote environments in `appsettings.json`:
+
+```json
+"EnvCompare": {
+  "Timeout": "00:02:00",
+  "Environments": [
+    { "Name": "Development", "ApiUrl": "https://my-project-dev.umbraco.io", "Authentication": "" }
+  ],
+  "IgnoredContentTypes": [],
+  "IgnoredPaths": [],
+  "IgnoredProperties": []
+}
+```
+
+Remote URLs should be the site root. The provider calls `umbraco/envcompare/api/v1/...` on that host (the peer site must also have EnvCompare installed).
+
+## Build the NuGet package
+
+Prerequisites: .NET 10 SDK, Node.js 20+ (for the backoffice Client Vite build).
+
+```bash
+dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release
+```
+
+Output: `artifacts/EnvCompare.0.1.0.nupkg`
+
+Skip the Client build when iterating on C# only:
+
+```bash
+dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release -p:SkipClientBuild=true
+```
 
 ## Solution layout
 
 ```
 EnvCompare.sln
-├── src/
-│   ├── EnvCompare.Core/            # Domain, abstractions, comparison models
-│   ├── EnvCompare.Infrastructure/  # Environment providers, repositories, caching
-│   ├── EnvCompare.Backoffice/      # Installable RCL package (API + App_Plugins)
-│   └── EnvCompare.Site/            # Local Umbraco 17 host for development
-└── tests/
-    └── EnvCompare.Tests/           # Unit tests
+└── src/
+    ├── EnvCompare.Core/            # Domain, abstractions, comparison engine
+    ├── EnvCompare.Infrastructure/  # Providers, caching, migrations
+    └── EnvCompare.Backoffice/      # Installable RCL (API + App_Plugins) — this is the NuGet package
 ```
 
-## Development plan (step-gated)
+## Features
 
-| Step | Status | Focus |
-|------|--------|--------|
-| 1 | Done | Solution structure |
-| 2 | Done | Package manifest / Vite packaging |
-| 3 | Done | Dashboard shell |
-| 4 | Done | Environment abstraction implementations |
-| 5 | Done | Comparison engine |
-| 6 | Done | Full backoffice UI |
-| 7 | Done | Meaningful unit tests |
+- Compare Local ↔ Development ↔ Staging ↔ Production (any configured pair)
+- Modules: content, media, settings (languages), dictionary (stub)
+- Read-only, admin-only backoffice dashboard under **Settings → EnvCompare**
+- Git-style diff panel, virtual scrolling, tree view, rich filters
+- `POST /umbraco/envcompare/api/v1/compare`
 
-## Prerequisites
-
-- .NET 10 SDK
-- Node.js 20+ (Client Vite builds)
-- Umbraco 17 compatible tooling
-
-## Build
-
-```bash
-dotnet build EnvCompare.sln
-```
-
-This restores NuGet packages and builds the Backoffice Client (`npm run build`) into:
-
-`src/EnvCompare.Backoffice/wwwroot/App_Plugins/EnvCompare/`
-
-Skip the Client build when iterating on C# only:
-
-```bash
-dotnet build -p:SkipClientBuild=true
-```
-
-## Client (watch mode)
+## Client development
 
 ```bash
 cd src/EnvCompare.Backoffice/Client
@@ -57,80 +70,12 @@ npm install
 npm run watch
 ```
 
-## Run the host site
+Assets emit to `src/EnvCompare.Backoffice/wwwroot/App_Plugins/EnvCompare/`.
 
-```bash
-dotnet run --project src/EnvCompare.Site
-```
+## Migrations
 
-Package assets are served from the referenced RCL as static web assets under `/App_Plugins/EnvCompare/`.
+| Step | Migration | Purpose |
+|------|-----------|---------|
+| `8f4e2c1a-…` | `EnvCompareInitialMigration` | Creates `EnvComparePackageState` and records install version |
 
-## Dashboard (Step 3)
-
-After building the Client, administrators see **EnvCompare** under the **Settings** section tab strip.
-
-- Manifest alias: `EnvCompare.Dashboard.Compare`
-- Conditions: Settings section + `Umb.Condition.CurrentUser.IsAdmin`
-- API policy: `RequireAdminAccess` (read-only)
-
-## Environments (Step 4)
-
-Providers are resolved through `IEnvironmentProviderRegistry`:
-
-- **Local** — `LocalEnvironmentProvider` (Umbraco `IContentService` / `IMediaService` / `ILanguageService`)
-- **Remote** — `RemoteEnvironmentProvider` per `EnvCompare:Environments` entry (`ApiUrl` + optional Bearer `Authentication`)
-
-Configure remotes in `appsettings.json`:
-
-```json
-"EnvCompare": {
-  "Timeout": "00:02:00",
-  "Environments": [
-    { "Name": "Development", "ApiUrl": "https://my-project-dev.umbraco.io", "Authentication": "" }
-  ]
-}
-```
-
-Remote URLs should be the site root. The provider calls `umbraco/envcompare/api/v1/...` on that host (peer EnvCompare API).
-
-## Comparison engine (Step 5)
-
-`IComparisonEngine` orchestrates pluggable `IComparerModule` implementations:
-
-| Module | Alias | What it compares today |
-|--------|-------|-------------------------|
-| Content | `content` | Keys, name, type, parent, sort, level, cultures, published |
-| Media | `media` | Keys, name, type, parent, sort, filename |
-| Settings | `settings` | Languages |
-| Dictionary | `dictionary` | Stub (empty until dictionary provider exists) |
-
-API: `POST /umbraco/envcompare/api/v1/compare`
-
-Supports cancellation, progress reporting, ignore lists from config, and request filters (status/search/path/type/culture).
-
-## Dashboard UI (Step 6)
-
-After building the Client, the dashboard includes:
-
-- **Git-style diff panel** — side-by-side values with added/removed highlighting
-- **Virtual scrolling** — windowed rendering for large result sets
-- **Tree view** — expandable hierarchy from Umbraco paths (toggle List/Tree)
-- **Rich filters** — status, culture, content type, path, search, show/hide ignored
-- **Instant client-side filtering** — filters apply without re-running Compare
-- **Resizable diff panel** — drag the splitter between results and differences
-- **Tab counts**, status icons, loading overlay, sticky toolbar/filters
-
-## Tests (Step 7)
-
-```bash
-dotnet test
-```
-
-Coverage includes the comparison engine, all comparer modules, result filtering/aggregation, tree loading, environment registry, and cache behavior.
-
-## Architecture notes
-
-- Comparison engine never couples to Local vs Remote — only `IEnvironmentProvider`.
-- Comparers plug in via `IComparerModule` for future extensibility (e.g. Members).
-- Backoffice is the NuGet package surface; Site is development-only.
-- `umbraco-package.json` registers a `bundle` that loads the Vite entry (`env-compare.js`).
+Future package versions add new steps to `EnvCompareMigrationPlan`.

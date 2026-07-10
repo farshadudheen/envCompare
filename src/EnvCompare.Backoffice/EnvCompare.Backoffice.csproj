@@ -14,6 +14,9 @@
     <Version>0.1.0</Version>
     <PackageVersion>0.1.0</PackageVersion>
     <Description>Compare content between Umbraco Cloud environments from the backoffice.</Description>
+    <PackageTags>umbraco;umbraco-package;umbraco17;cloud;compare</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageOutputPath>..\..\artifacts</PackageOutputPath>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
     <IncludeContentInPack>true</IncludeContentInPack>
@@ -24,8 +27,8 @@
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Api.Common" />
     <PackageReference Include="Umbraco.Cms.Api.Management" />
+    <PackageReference Include="Umbraco.Cms.Infrastructure" />
     <PackageReference Include="Umbraco.Cms.Web.Common" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,12 +38,28 @@
     <None Include="Client\public\umbraco-package.json" Pack="false" />
     <None Include="Client\package.json" Pack="false" />
     <None Include="Client\vite.config.ts" Pack="false" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EnvCompare.Core\EnvCompare.Core.csproj" />
-    <ProjectReference Include="..\EnvCompare.Infrastructure\EnvCompare.Infrastructure.csproj" />
+    <!-- Bundle Core + Infrastructure DLLs into the single EnvCompare.nupkg (not separate NuGet deps). -->
+    <ProjectReference Include="..\EnvCompare.Core\EnvCompare.Core.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\EnvCompare.Infrastructure\EnvCompare.Infrastructure.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
   </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
 
   <!--
     Build Lit/Vite assets into wwwroot/App_Plugins/EnvCompare before static web assets are collected.
