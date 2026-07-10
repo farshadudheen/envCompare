@@ -1,4 +1,5 @@
-import { client } from "../api/client.gen.js";
+import { managementApiSecurity } from "./management-api.js";
+import { umbHttpClient } from "@umbraco-cms/backoffice/http-client";
 
 export type EnvironmentInfo = {
   name: string;
@@ -12,8 +13,9 @@ export type EnvironmentInfo = {
  * Loads configured environments from the EnvCompare management API.
  */
 export async function fetchEnvironments(): Promise<EnvironmentInfo[]> {
-  const { data, error, response } = await client.get({
-    url: "/umbraco/envcompare/api/v1/environments",
+  const { data, error, response } = await umbHttpClient.get({
+    url: "/umbraco/management/api/v1/envcompare/environments",
+    security: managementApiSecurity,
   });
 
   if (error || !response.ok) {

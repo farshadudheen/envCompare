@@ -1,4 +1,5 @@
-import { client } from "./client.gen.js";
+import { managementApiSecurity } from "./management-api.js";
+import { umbHttpClient } from "@umbraco-cms/backoffice/http-client";
 
 export type DifferenceType =
   | "Identical"
@@ -49,8 +50,9 @@ export type CompareRequest = {
 export async function runComparison(
   request: CompareRequest,
 ): Promise<ComparisonResult> {
-  const { data, error, response } = await client.post({
-    url: "/umbraco/envcompare/api/v1/compare",
+  const { data, error, response } = await umbHttpClient.post({
+    url: "/umbraco/management/api/v1/envcompare/compare",
+    security: managementApiSecurity,
     body: request,
     headers: {
       "Content-Type": "application/json",

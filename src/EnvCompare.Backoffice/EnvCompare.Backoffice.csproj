@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -11,8 +11,8 @@
     <PackageId>EnvCompare</PackageId>
     <Product>EnvCompare</Product>
     <Title>EnvCompare</Title>
-    <Version>0.1.0</Version>
-    <PackageVersion>0.1.0</PackageVersion>
+    <!-- Single source of truth for the NuGet package version (Visual Studio "Package version" edits this). -->
+    <Version>0.17.4</Version>
     <Description>Compare content between Umbraco Cloud environments from the backoffice.</Description>
     <PackageTags>umbraco;umbraco-package;umbraco17;cloud;compare</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -22,6 +22,7 @@
     <IncludeContentInPack>true</IncludeContentInPack>
     <!-- Set to true to skip Vite build when iterating on C# only. -->
     <SkipClientBuild Condition="'$(SkipClientBuild)' == ''">false</SkipClientBuild>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -57,7 +58,7 @@
 
   <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
     <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
     </ItemGroup>
   </Target>
 
@@ -65,16 +66,12 @@
     Build Lit/Vite assets into wwwroot/App_Plugins/EnvCompare before static web assets are collected.
     Requires Node.js/npm. Use -p:SkipClientBuild=true to skip.
   -->
-  <Target Name="NpmInstallClient"
-          BeforeTargets="NpmBuildClient"
-          Condition="'$(SkipClientBuild)' != 'true' AND !Exists('$(MSBuildProjectDirectory)\Client\node_modules')">
+  <Target Name="NpmInstallClient" BeforeTargets="NpmBuildClient" Condition="'$(SkipClientBuild)' != 'true' AND !Exists('$(MSBuildProjectDirectory)\Client\node_modules')">
     <Message Importance="high" Text="EnvCompare: npm install (Client)" />
     <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm install" />
   </Target>
 
-  <Target Name="NpmBuildClient"
-          BeforeTargets="ResolveProjectStaticWebAssets"
-          Condition="'$(SkipClientBuild)' != 'true'">
+  <Target Name="NpmBuildClient" BeforeTargets="ResolveProjectStaticWebAssets" Condition="'$(SkipClientBuild)' != 'true'">
     <Message Importance="high" Text="EnvCompare: npm run build (Client)" />
     <Exec WorkingDirectory="$(MSBuildProjectDirectory)\Client" Command="npm run build" />
   </Target>

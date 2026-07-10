@@ -1,41 +1,42 @@
-import { umbHttpClient as _ } from "@umbraco-cms/backoffice/http-client";
+import { UMB_AUTH_CONTEXT as F } from "@umbraco-cms/backoffice/auth";
+import { umbHttpClient as M } from "@umbraco-cms/backoffice/http-client";
 const G = {
   bodySerializer: (t) => JSON.stringify(
     t,
     (e, r) => typeof r == "bigint" ? r.toString() : r
   )
-}, M = ({
+}, Q = ({
   onRequest: t,
   onSseError: e,
   onSseEvent: r,
   responseTransformer: o,
-  responseValidator: n,
+  responseValidator: a,
   sseDefaultRetryDelay: l,
   sseMaxRetryAttempts: c,
-  sseMaxRetryDelay: a,
+  sseMaxRetryDelay: n,
   sseSleepFn: i,
   url: u,
   ...s
 }) => {
   let d;
-  const E = i ?? ((f) => new Promise((y) => setTimeout(y, f)));
+  const j = i ?? ((f) => new Promise((y) => setTimeout(y, f)));
   return { stream: async function* () {
     let f = l ?? 3e3, y = 0;
     const S = s.signal ?? new AbortController().signal;
     for (; !S.aborted; ) {
       y++;
-      const x = s.headers instanceof Headers ? s.headers : new Headers(s.headers);
-      d !== void 0 && x.set("Last-Event-ID", d);
+      const C = s.headers instanceof Headers ? s.headers : new Headers(s.headers);
+      d !== void 0 && C.set("Last-Event-ID", d);
       try {
-        const j = {
+        const x = {
           redirect: "follow",
           ...s,
           body: s.serializedBody,
-          headers: x,
+          headers: C,
           signal: S
         };
-        let m = new Request(u, j);
-        t && (m = await t(u, j));
+        let m = new Request(u, x);
+        t && (m = await t(u, x));
         const p = await (s.fetch ?? globalThis.fetch)(m);
         if (!p.ok)
           throw new Error(
@@ -53,65 +54,65 @@ const G = {
         S.addEventListener("abort", $);
         try {
           for (; ; ) {
-            const { done: V, value: L } = await g.read();
-            if (V) break;
-            O += L;
+            const { done: _, value: V } = await g.read();
+            if (_) break;
+            O += V;
             const k = O.split(`
 
 `);
             O = k.pop() ?? "";
-            for (const J of k) {
-              const F = J.split(`
-`), q = [];
+            for (const L of k) {
+              const J = L.split(`
+`), T = [];
               let I;
-              for (const b of F)
+              for (const b of J)
                 if (b.startsWith("data:"))
-                  q.push(b.replace(/^data:\s*/, ""));
+                  T.push(b.replace(/^data:\s*/, ""));
                 else if (b.startsWith("event:"))
                   I = b.replace(/^event:\s*/, "");
                 else if (b.startsWith("id:"))
                   d = b.replace(/^id:\s*/, "");
                 else if (b.startsWith("retry:")) {
-                  const D = Number.parseInt(
+                  const U = Number.parseInt(
                     b.replace(/^retry:\s*/, ""),
                     10
                   );
-                  Number.isNaN(D) || (f = D);
+                  Number.isNaN(U) || (f = U);
                 }
-              let z, B = !1;
-              if (q.length) {
-                const b = q.join(`
+              let E, B = !1;
+              if (T.length) {
+                const b = T.join(`
 `);
                 try {
-                  z = JSON.parse(b), B = !0;
+                  E = JSON.parse(b), B = !0;
                 } catch {
-                  z = b;
+                  E = b;
                 }
               }
-              B && (n && await n(z), o && (z = await o(z))), r?.({
-                data: z,
+              B && (a && await a(E), o && (E = await o(E))), r?.({
+                data: E,
                 event: I,
                 id: d,
                 retry: f
-              }), q.length && (yield z);
+              }), T.length && (yield E);
             }
           }
         } finally {
           S.removeEventListener("abort", $), g.releaseLock();
         }
         break;
-      } catch (j) {
-        if (e?.(j), c !== void 0 && y >= c)
+      } catch (x) {
+        if (e?.(x), c !== void 0 && y >= c)
           break;
         const m = Math.min(
           f * 2 ** (y - 1),
-          a ?? 3e4
+          n ?? 3e4
         );
-        await E(m);
+        await j(m);
       }
     }
   }() };
-}, Q = (t) => {
+}, X = (t) => {
   switch (t) {
     case "label":
       return ".";
@@ -133,7 +134,7 @@ const G = {
     default:
       return ",";
   }
-}, X = (t) => {
+}, Y = (t) => {
   switch (t) {
     case "label":
       return ".";
@@ -144,30 +145,30 @@ const G = {
     default:
       return "&";
   }
-}, U = ({
+}, P = ({
   allowReserved: t,
   explode: e,
   name: r,
   style: o,
-  value: n
+  value: a
 }) => {
   if (!e) {
-    const a = (t ? n : n.map((i) => encodeURIComponent(i))).join(K(o));
+    const n = (t ? a : a.map((i) => encodeURIComponent(i))).join(K(o));
     switch (o) {
       case "label":
-        return `.${a}`;
+        return `.${n}`;
       case "matrix":
-        return `;${r}=${a}`;
+        return `;${r}=${n}`;
       case "simple":
-        return a;
+        return n;
       default:
-        return `${r}=${a}`;
+        return `${r}=${n}`;
     }
   }
-  const l = Q(o), c = n.map((a) => o === "label" || o === "simple" ? t ? a : encodeURIComponent(a) : A({
+  const l = X(o), c = a.map((n) => o === "label" || o === "simple" ? t ? n : encodeURIComponent(n) : A({
     allowReserved: t,
     name: r,
-    value: a
+    value: n
   })).join(l);
   return o === "label" || o === "matrix" ? l + c : c;
 }, A = ({
@@ -182,19 +183,19 @@ const G = {
       "Deeply-nested arrays/objects aren’t supported. Provide your own `querySerializer()` to handle these."
     );
   return `${e}=${t ? r : encodeURIComponent(r)}`;
-}, v = ({
+}, D = ({
   allowReserved: t,
   explode: e,
   name: r,
   style: o,
-  value: n,
+  value: a,
   valueOnly: l
 }) => {
-  if (n instanceof Date)
-    return l ? n.toISOString() : `${r}=${n.toISOString()}`;
+  if (a instanceof Date)
+    return l ? a.toISOString() : `${r}=${a.toISOString()}`;
   if (o !== "deepObject" && !e) {
     let i = [];
-    Object.entries(n).forEach(([s, d]) => {
+    Object.entries(a).forEach(([s, d]) => {
       i = [
         ...i,
         s,
@@ -213,47 +214,47 @@ const G = {
         return u;
     }
   }
-  const c = X(o), a = Object.entries(n).map(
+  const c = Y(o), n = Object.entries(a).map(
     ([i, u]) => A({
       allowReserved: t,
       name: o === "deepObject" ? `${r}[${i}]` : i,
       value: u
     })
   ).join(c);
-  return o === "label" || o === "matrix" ? c + a : a;
-}, Y = /\{[^{}]+\}/g, Z = ({ path: t, url: e }) => {
+  return o === "label" || o === "matrix" ? c + n : n;
+}, Z = /\{[^{}]+\}/g, ee = ({ path: t, url: e }) => {
   let r = e;
-  const o = e.match(Y);
+  const o = e.match(Z);
   if (o)
-    for (const n of o) {
-      let l = !1, c = n.substring(1, n.length - 1), a = "simple";
-      c.endsWith("*") && (l = !0, c = c.substring(0, c.length - 1)), c.startsWith(".") ? (c = c.substring(1), a = "label") : c.startsWith(";") && (c = c.substring(1), a = "matrix");
+    for (const a of o) {
+      let l = !1, c = a.substring(1, a.length - 1), n = "simple";
+      c.endsWith("*") && (l = !0, c = c.substring(0, c.length - 1)), c.startsWith(".") ? (c = c.substring(1), n = "label") : c.startsWith(";") && (c = c.substring(1), n = "matrix");
       const i = t[c];
       if (i == null)
         continue;
       if (Array.isArray(i)) {
         r = r.replace(
-          n,
-          U({ explode: l, name: c, style: a, value: i })
+          a,
+          P({ explode: l, name: c, style: n, value: i })
         );
         continue;
       }
       if (typeof i == "object") {
         r = r.replace(
-          n,
-          v({
+          a,
+          D({
             explode: l,
             name: c,
-            style: a,
+            style: n,
             value: i,
             valueOnly: !0
           })
         );
         continue;
       }
-      if (a === "matrix") {
+      if (n === "matrix") {
         r = r.replace(
-          n,
+          a,
           `;${A({
             name: c,
             value: i
@@ -262,32 +263,32 @@ const G = {
         continue;
       }
       const u = encodeURIComponent(
-        a === "label" ? `.${i}` : i
+        n === "label" ? `.${i}` : i
       );
-      r = r.replace(n, u);
+      r = r.replace(a, u);
     }
   return r;
-}, ee = ({
+}, te = ({
   baseUrl: t,
   path: e,
   query: r,
   querySerializer: o,
-  url: n
+  url: a
 }) => {
-  const l = n.startsWith("/") ? n : `/${n}`;
+  const l = a.startsWith("/") ? a : `/${a}`;
   let c = (t ?? "") + l;
-  e && (c = Z({ path: e, url: c }));
-  let a = r ? o(r) : "";
-  return a.startsWith("?") && (a = a.substring(1)), a && (c += `?${a}`), c;
+  e && (c = ee({ path: e, url: c }));
+  let n = r ? o(r) : "";
+  return n.startsWith("?") && (n = n.substring(1)), n && (c += `?${n}`), c;
 };
-function te(t) {
+function re(t) {
   const e = t.body !== void 0;
   if (e && t.bodySerializer)
     return "serializedBody" in t ? t.serializedBody !== void 0 && t.serializedBody !== "" ? t.serializedBody : null : t.body !== "" ? t.body : null;
   if (e)
     return t.body;
 }
-const re = async (t, e) => {
+const se = async (t, e) => {
   const r = typeof e == "function" ? await e(t) : e;
   if (r)
     return t.scheme === "bearer" ? `Bearer ${r}` : t.scheme === "basic" ? `Basic ${btoa(r)}` : r;
@@ -295,29 +296,29 @@ const re = async (t, e) => {
   allowReserved: t,
   array: e,
   object: r
-} = {}) => (n) => {
+} = {}) => (a) => {
   const l = [];
-  if (n && typeof n == "object")
-    for (const c in n) {
-      const a = n[c];
-      if (a != null)
-        if (Array.isArray(a)) {
-          const i = U({
+  if (a && typeof a == "object")
+    for (const c in a) {
+      const n = a[c];
+      if (n != null)
+        if (Array.isArray(n)) {
+          const i = P({
             allowReserved: t,
             explode: !0,
             name: c,
             style: "form",
-            value: a,
+            value: n,
             ...e
           });
           i && l.push(i);
-        } else if (typeof a == "object") {
-          const i = v({
+        } else if (typeof n == "object") {
+          const i = D({
             allowReserved: t,
             explode: !0,
             name: c,
             style: "deepObject",
-            value: a,
+            value: n,
             ...r
           });
           i && l.push(i);
@@ -325,13 +326,13 @@ const re = async (t, e) => {
           const i = A({
             allowReserved: t,
             name: c,
-            value: a
+            value: n
           });
           i && l.push(i);
         }
     }
   return l.join("&");
-}, se = (t) => {
+}, ne = (t) => {
   if (!t)
     return "stream";
   const e = t.split(";")[0]?.trim();
@@ -347,39 +348,39 @@ const re = async (t, e) => {
     if (e.startsWith("text/"))
       return "text";
   }
-}, ae = (t, e) => e ? !!(t.headers.has(e) || t.query?.[e] || t.headers.get("Cookie")?.includes(`${e}=`)) : !1, ne = async ({
+}, ae = (t, e) => e ? !!(t.headers.has(e) || t.query?.[e] || t.headers.get("Cookie")?.includes(`${e}=`)) : !1, ie = async ({
   security: t,
   ...e
 }) => {
   for (const r of t) {
     if (ae(e, r.name))
       continue;
-    const o = await re(r, e.auth);
+    const o = await se(r, e.auth);
     if (!o)
       continue;
-    const n = r.name ?? "Authorization";
+    const a = r.name ?? "Authorization";
     switch (r.in) {
       case "query":
-        e.query || (e.query = {}), e.query[n] = o;
+        e.query || (e.query = {}), e.query[a] = o;
         break;
       case "cookie":
-        e.headers.append("Cookie", `${n}=${o}`);
+        e.headers.append("Cookie", `${a}=${o}`);
         break;
       default:
-        e.headers.set(n, o);
+        e.headers.set(a, o);
         break;
     }
   }
-}, N = (t) => ee({
+}, v = (t) => te({
   baseUrl: t.baseUrl,
   path: t.path,
   query: t.query,
   querySerializer: typeof t.querySerializer == "function" ? t.querySerializer : H(t.querySerializer),
   url: t.url
-}), P = (t, e) => {
+}), N = (t, e) => {
   const r = { ...t, ...e };
   return r.baseUrl?.endsWith("/") && (r.baseUrl = r.baseUrl.substring(0, r.baseUrl.length - 1)), r.headers = W(t.headers, e.headers), r;
-}, ie = (t) => {
+}, oe = (t) => {
   const e = [];
   return t.forEach((r, o) => {
     e.push([o, r]);
@@ -389,21 +390,21 @@ const re = async (t, e) => {
   for (const r of t) {
     if (!r)
       continue;
-    const o = r instanceof Headers ? ie(r) : Object.entries(r);
-    for (const [n, l] of o)
+    const o = r instanceof Headers ? oe(r) : Object.entries(r);
+    for (const [a, l] of o)
       if (l === null)
-        e.delete(n);
+        e.delete(a);
       else if (Array.isArray(l))
         for (const c of l)
-          e.append(n, c);
+          e.append(a, c);
       else l !== void 0 && e.set(
-        n,
+        a,
         typeof l == "object" ? JSON.stringify(l) : l
       );
   }
   return e;
 };
-class T {
+class q {
   constructor() {
     this.fns = [];
   }
@@ -429,11 +430,11 @@ class T {
     return this.fns.push(e), this.fns.length - 1;
   }
 }
-const oe = () => ({
-  error: new T(),
-  request: new T(),
-  response: new T()
-}), ce = H({
+const ce = () => ({
+  error: new q(),
+  request: new q(),
+  response: new q()
+}), le = H({
   allowReserved: !1,
   array: {
     explode: !0,
@@ -443,17 +444,17 @@ const oe = () => ({
     explode: !0,
     style: "deepObject"
   }
-}), le = {
+}), fe = {
   "Content-Type": "application/json"
 }, R = (t = {}) => ({
   ...G,
-  headers: le,
+  headers: fe,
   parseAs: "auto",
-  querySerializer: ce,
+  querySerializer: le,
   ...t
-}), fe = (t = {}) => {
-  let e = P(R(), t);
-  const r = () => ({ ...e }), o = (u) => (e = P(e, u), r()), n = oe(), l = async (u) => {
+}), ue = (t = {}) => {
+  let e = N(R(), t);
+  const r = () => ({ ...e }), o = (u) => (e = N(e, u), r()), a = ce(), l = async (u) => {
     const s = {
       ...e,
       ...u,
@@ -461,31 +462,31 @@ const oe = () => ({
       headers: W(e.headers, u.headers),
       serializedBody: void 0
     };
-    s.security && await ne({
+    s.security && await ie({
       ...s,
       security: s.security
     }), s.requestValidator && await s.requestValidator(s), s.body !== void 0 && s.bodySerializer && (s.serializedBody = s.bodySerializer(s.body)), (s.body === void 0 || s.serializedBody === "") && s.headers.delete("Content-Type");
-    const d = N(s);
+    const d = v(s);
     return { opts: s, url: d };
   }, c = async (u) => {
-    const { opts: s, url: d } = await l(u), E = {
+    const { opts: s, url: d } = await l(u), j = {
       redirect: "follow",
       ...s,
-      body: te(s)
+      body: re(s)
     };
-    let w = new Request(d, E);
-    for (const h of n.request.fns)
+    let w = new Request(d, j);
+    for (const h of a.request.fns)
       h && (w = await h(w, s));
-    const C = s.fetch;
-    let f = await C(w);
-    for (const h of n.response.fns)
+    const z = s.fetch;
+    let f = await z(w);
+    for (const h of a.response.fns)
       h && (f = await h(f, w, s));
     const y = {
       request: w,
       response: f
     };
     if (f.ok) {
-      const h = (s.parseAs === "auto" ? se(f.headers.get("Content-Type")) : s.parseAs) ?? "json";
+      const h = (s.parseAs === "auto" ? ne(f.headers.get("Content-Type")) : s.parseAs) ?? "json";
       if (f.status === 204 || f.headers.get("Content-Length") === "0") {
         let g;
         switch (h) {
@@ -530,49 +531,49 @@ const oe = () => ({
       };
     }
     const S = await f.text();
-    let x;
+    let C;
     try {
-      x = JSON.parse(S);
+      C = JSON.parse(S);
     } catch {
     }
-    const j = x ?? S;
-    let m = j;
-    for (const h of n.error.fns)
-      h && (m = await h(j, f, w, s));
+    const x = C ?? S;
+    let m = x;
+    for (const h of a.error.fns)
+      h && (m = await h(x, f, w, s));
     if (m = m || {}, s.throwOnError)
       throw m;
     return s.responseStyle === "data" ? void 0 : {
       error: m,
       ...y
     };
-  }, a = (u) => (s) => c({ ...s, method: u }), i = (u) => async (s) => {
-    const { opts: d, url: E } = await l(s);
-    return M({
+  }, n = (u) => (s) => c({ ...s, method: u }), i = (u) => async (s) => {
+    const { opts: d, url: j } = await l(s);
+    return Q({
       ...d,
       body: d.body,
       headers: d.headers,
       method: u,
-      onRequest: async (w, C) => {
-        let f = new Request(w, C);
-        for (const y of n.request.fns)
+      onRequest: async (w, z) => {
+        let f = new Request(w, z);
+        for (const y of a.request.fns)
           y && (f = await y(f, d));
         return f;
       },
-      url: E
+      url: j
     });
   };
   return {
-    buildUrl: N,
-    connect: a("CONNECT"),
-    delete: a("DELETE"),
-    get: a("GET"),
+    buildUrl: v,
+    connect: n("CONNECT"),
+    delete: n("DELETE"),
+    get: n("GET"),
     getConfig: r,
-    head: a("HEAD"),
-    interceptors: n,
-    options: a("OPTIONS"),
-    patch: a("PATCH"),
-    post: a("POST"),
-    put: a("PUT"),
+    head: n("HEAD"),
+    interceptors: a,
+    options: n("OPTIONS"),
+    patch: n("PATCH"),
+    post: n("POST"),
+    put: n("PUT"),
     request: c,
     setConfig: o,
     sse: {
@@ -586,15 +587,25 @@ const oe = () => ({
       put: i("PUT"),
       trace: i("TRACE")
     },
-    trace: a("TRACE")
+    trace: n("TRACE")
   };
-}, ue = (t) => ({
+}, de = (t) => ({
   ...t,
-  ..._.getConfig()
-}), he = fe(ue(R({
+  ...M.getConfig()
+}), he = ue(de(R({
   baseUrl: "https://localhost:5000"
-})));
-export {
-  he as c
+}))), be = async (t, e) => {
+  const r = await t.getContext(F);
+  if (!r) {
+    console.warn("UMB_AUTH_CONTEXT not available — extension API client will not be authenticated");
+    return;
+  }
+  r.configureClient(he), console.log("EnvCompare extension initialized");
+}, me = (t, e) => {
+  console.log("EnvCompare extension unloaded");
 };
-//# sourceMappingURL=client.gen-Cq1iPozM.js.map
+export {
+  be as onInit,
+  me as onUnload
+};
+//# sourceMappingURL=entrypoint-DICCKGz1.js.map

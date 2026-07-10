@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace EnvCompare.Backoffice;
 
 /// <summary>
@@ -11,9 +13,13 @@ public static class Constants
     public const string PackageId = "EnvCompare";
 
     /// <summary>
-    /// Package semantic version (keep aligned with Client package.json and umbraco-package.json).
+    /// Package semantic version from the built assembly (matches <c>&lt;Version&gt;</c> in the csproj).
     /// </summary>
-    public const string PackageVersion = "0.1.0";
+    public static string PackageVersion { get; } =
+        typeof(Constants).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? typeof(Constants).Assembly.GetName().Version?.ToString(3)
+        ?? "0.0.0";
 
     /// <summary>
     /// OpenAPI / Swagger document name for EnvCompare management APIs.

@@ -1,9 +1,13 @@
 import { css as X, property as B, customElement as q, html as h, state as f } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as Y } from "@umbraco-cms/backoffice/lit-element";
-import { c as K } from "./client.gen-Cq1iPozM.js";
-async function Se() {
+import { umbHttpClient as K } from "@umbraco-cms/backoffice/http-client";
+const J = [
+  { type: "http", scheme: "bearer" }
+];
+async function Ae() {
   const { data: e, error: t, response: r } = await K.get({
-    url: "/umbraco/envcompare/api/v1/environments"
+    url: "/umbraco/management/api/v1/envcompare/environments",
+    security: J
   });
   if (t || !r.ok)
     throw new Error(
@@ -12,9 +16,10 @@ async function Se() {
   const i = e;
   return Array.isArray(i) ? i : [];
 }
-async function Ae(e) {
+async function Ee(e) {
   const { data: t, error: r, response: i } = await K.post({
-    url: "/umbraco/envcompare/api/v1/compare",
+    url: "/umbraco/management/api/v1/envcompare/compare",
+    security: J,
     body: e,
     headers: {
       "Content-Type": "application/json"
@@ -32,11 +37,11 @@ function A(e) {
 function N(e) {
   return e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-function Ee(e, t) {
-  const r = U(e), i = U(t), s = J(r, i);
-  return Me(r, i, s);
-}
 function Le(e, t) {
+  const r = U(e), i = U(t), s = Q(r, i);
+  return Fe(r, i, s);
+}
+function Me(e, t) {
   const r = e ?? "", i = t ?? "";
   if (r === i)
     return {
@@ -57,8 +62,8 @@ function Le(e, t) {
 `), n = i.split(`
 `);
   if (s.length === 1 && n.length === 1)
-    return Ee(r, i);
-  const l = J(s, n), d = [], p = [];
+    return Le(r, i);
+  const l = Q(s, n), d = [], p = [];
   let c = 0, g = 0;
   for (const b of l) {
     for (; c < s.length && s[c] !== b; )
@@ -89,7 +94,7 @@ function U(e) {
     t.push(i[0]);
   return t.length > 0 ? t : [e];
 }
-function J(e, t) {
+function Q(e, t) {
   const r = e.length + 1, i = t.length + 1, s = Array.from({ length: r }, () => Array(i).fill(0));
   for (let p = 1; p < r; p++)
     for (let c = 1; c < i; c++)
@@ -100,7 +105,7 @@ function J(e, t) {
     e[l - 1] === t[d - 1] ? (n.unshift(e[l - 1]), l--, d--) : s[l - 1][d] >= s[l][d - 1] ? l-- : d--;
   return n;
 }
-function Me(e, t, r) {
+function Fe(e, t, r) {
   const i = [], s = [];
   let n = 0, l = 0;
   for (const d of r) {
@@ -129,16 +134,16 @@ function k(e) {
   }
   return t;
 }
-var Fe = Object.defineProperty, Pe = Object.getOwnPropertyDescriptor, Q = (e) => {
+var Pe = Object.defineProperty, ze = Object.getOwnPropertyDescriptor, Z = (e) => {
   throw TypeError(e);
 }, E = (e, t, r, i) => {
-  for (var s = i > 1 ? void 0 : i ? Pe(t, r) : t, n = e.length - 1, l; n >= 0; n--)
+  for (var s = i > 1 ? void 0 : i ? ze(t, r) : t, n = e.length - 1, l; n >= 0; n--)
     (l = e[n]) && (s = (i ? l(t, r, s) : l(s)) || s);
-  return i && s && Fe(t, r, s), s;
-}, ze = (e, t, r) => t.has(e) || Q("Cannot " + r), Ie = (e, t, r) => t.has(e) ? Q("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), j = (e, t, r) => (ze(e, t, "access private method"), r), x, F;
+  return i && s && Pe(t, r, s), s;
+}, Ie = (e, t, r) => t.has(e) || Z("Cannot " + r), Be = (e, t, r) => t.has(e) ? Z("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), j = (e, t, r) => (Ie(e, t, "access private method"), r), x, F;
 let y = class extends Y {
   constructor() {
-    super(...arguments), Ie(this, x), this.item = null, this.environmentA = "Environment A", this.environmentB = "Environment B";
+    super(...arguments), Be(this, x), this.item = null, this.environmentA = "Environment A", this.environmentB = "Environment B";
   }
   render() {
     if (!this.item)
@@ -188,7 +193,7 @@ let y = class extends Y {
 };
 x = /* @__PURE__ */ new WeakSet();
 F = function(e, t, r, i) {
-  const s = Le(
+  const s = Me(
     r === "left" ? t : i,
     r === "left" ? i : t
   ), n = r === "left" ? s.left.parts : s.right.parts, l = t ?? "(missing)";
@@ -401,14 +406,14 @@ E([
 y = E([
   q("envcompare-diff-panel")
 ], y);
-const Be = {
+const Re = {
   Missing: 4,
   Modified: 3,
   Added: 2,
   Identical: 1,
   Ignored: 0
 };
-function Z(e) {
+function ee(e) {
   const t = /* @__PURE__ */ new Map(), r = [], i = [...e].sort((s, n) => {
     const l = s.path ?? s.id, d = n.path ?? n.id;
     return l.localeCompare(d);
@@ -437,15 +442,15 @@ function Z(e) {
       }
     }
   }
-  return te(r), r;
+  return re(r), r;
 }
-function ee(e, t, r = 0) {
+function te(e, t, r = 0) {
   const i = [];
   for (const s of e)
-    i.push({ node: s, depth: r }), s.children.length > 0 && t.has(s.path) && i.push(...ee(s.children, t, r + 1));
+    i.push({ node: s, depth: r }), s.children.length > 0 && t.has(s.path) && i.push(...te(s.children, t, r + 1));
   return i;
 }
-function Re(e) {
+function De(e) {
   const t = /* @__PURE__ */ new Set(), r = /* @__PURE__ */ new Set();
   for (const i of e)
     i.culture && t.add(i.culture), i.contentType && r.add(i.contentType);
@@ -455,16 +460,16 @@ function Re(e) {
   };
 }
 function G(e) {
-  return Be[A(e.status)] ?? 0;
+  return Re[A(e.status)] ?? 0;
 }
-function te(e) {
+function re(e) {
   for (const t of e)
-    t.children.length > 0 && (te(t.children), t.statusRank = Math.max(
+    t.children.length > 0 && (re(t.children), t.statusRank = Math.max(
       t.statusRank,
       ...t.children.map((r) => r.statusRank)
     ));
 }
-function re(e, t, r, i, s = 4) {
+function ie(e, t, r, i, s = 4) {
   if (r <= 0 || i <= 0)
     return { start: 0, end: 0, offsetTop: 0, totalHeight: 0 };
   const n = r * i, l = Math.max(0, Math.floor(e / i) - s), d = Math.ceil(t / i) + s * 2, p = Math.min(r, l + d);
@@ -475,19 +480,19 @@ function re(e, t, r, i, s = 4) {
     totalHeight: n
   };
 }
-var De = Object.defineProperty, Oe = Object.getOwnPropertyDescriptor, ie = (e) => {
+var Oe = Object.defineProperty, We = Object.getOwnPropertyDescriptor, se = (e) => {
   throw TypeError(e);
 }, m = (e, t, r, i) => {
-  for (var s = i > 1 ? void 0 : i ? Oe(t, r) : t, n = e.length - 1, l; n >= 0; n--)
+  for (var s = i > 1 ? void 0 : i ? We(t, r) : t, n = e.length - 1, l; n >= 0; n--)
     (l = e[n]) && (s = (i ? l(t, r, s) : l(s)) || s);
-  return i && s && De(t, r, s), s;
-}, R = (e, t, r) => t.has(e) || ie("Cannot " + r), P = (e, t, r) => (R(e, t, "read from private field"), t.get(e)), $ = (e, t, r) => t.has(e) ? ie("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), z = (e, t, r, i) => (R(e, t, "write to private field"), t.set(e, r), r), o = (e, t, r) => (R(e, t, "access private method"), r), C, T, S, a, se, ne, ae, oe, le, de, ce, pe, ue, he, D, L, me, fe, O, ge, ve, be, W, _e, ye, I, _, w, V, we, $e, xe, ke, Ce;
+  return i && s && Oe(t, r, s), s;
+}, R = (e, t, r) => t.has(e) || se("Cannot " + r), P = (e, t, r) => (R(e, t, "read from private field"), t.get(e)), $ = (e, t, r) => t.has(e) ? se("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), z = (e, t, r, i) => (R(e, t, "write to private field"), t.set(e, r), r), o = (e, t, r) => (R(e, t, "access private method"), r), C, S, T, a, ne, ae, oe, le, de, ce, pe, ue, he, me, D, L, fe, ge, O, ve, be, _e, W, ye, we, I, _, w, V, $e, xe, ke, Ce, Se;
 const Te = 52, H = {
   content: "content",
   media: "media",
   settings: "settings",
   dictionary: "dictionary"
-}, We = {
+}, Ve = {
   Identical: "✔",
   Added: "＋",
   Missing: "−",
@@ -496,10 +501,10 @@ const Te = 52, H = {
 };
 let u = class extends Y {
   constructor() {
-    super(...arguments), $(this, a), this._environments = [], this._environmentA = "Local", this._environmentB = "", this._isComparing = !1, this._isLoadingEnvironments = !0, this._progress = 0, this._statusMessage = "Loading environments…", this._activeTab = "content", this._viewMode = "tree", this._search = "", this._statusFilter = "", this._cultureFilter = "", this._contentTypeFilter = "", this._pathFilter = "", this._showIgnored = !1, this._result = null, this._selectedItem = null, this._expandedPaths = /* @__PURE__ */ new Set(), this._listScrollTop = 0, this._listViewportHeight = 420, this._diffPanelWidth = 22, $(this, C, null), $(this, T, 0), $(this, S, 22);
+    super(...arguments), $(this, a), this._environments = [], this._environmentA = "Local", this._environmentB = "", this._isComparing = !1, this._isLoadingEnvironments = !0, this._progress = 0, this._statusMessage = "Loading environments…", this._activeTab = "content", this._viewMode = "tree", this._search = "", this._statusFilter = "", this._cultureFilter = "", this._contentTypeFilter = "", this._pathFilter = "", this._showIgnored = !1, this._result = null, this._selectedItem = null, this._expandedPaths = /* @__PURE__ */ new Set(), this._listScrollTop = 0, this._listViewportHeight = 420, this._diffPanelWidth = 22, $(this, C, null), $(this, S, 0), $(this, T, 22);
   }
   connectedCallback() {
-    super.connectedCallback(), o(this, a, se).call(this);
+    super.connectedCallback(), o(this, a, ne).call(this);
   }
   render() {
     const e = o(this, a, L).call(this).length;
@@ -517,7 +522,7 @@ let u = class extends Y {
               <select
                 .value=${this._environmentA}
                 ?disabled=${this._isComparing || this._isLoadingEnvironments}
-                @change=${o(this, a, ne)}
+                @change=${o(this, a, ae)}
               >
                 ${o(this, a, I).call(this, this._environmentA)}
               </select>
@@ -528,7 +533,7 @@ let u = class extends Y {
               label="Swap environments"
               compact
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
-              @click=${o(this, a, he)}
+              @click=${o(this, a, me)}
             >
               ⇄
             </uui-button>
@@ -538,7 +543,7 @@ let u = class extends Y {
               <select
                 .value=${this._environmentB}
                 ?disabled=${this._isComparing || this._isLoadingEnvironments}
-                @change=${o(this, a, ae)}
+                @change=${o(this, a, oe)}
               >
                 ${o(this, a, I).call(this, this._environmentB)}
               </select>
@@ -549,7 +554,7 @@ let u = class extends Y {
               color="positive"
               label="Compare"
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
-              @click=${o(this, a, ye)}
+              @click=${o(this, a, we)}
             >
               ${this._isComparing ? "Comparing…" : "Compare"}
             </uui-button>
@@ -578,7 +583,7 @@ let u = class extends Y {
           class="workspace"
           style="--diff-width:${this._diffPanelWidth}rem"
         >
-          ${o(this, a, Ce).call(this)}
+          ${o(this, a, Se).call(this)}
 
           <main class="results">
             <nav class="tabs" aria-label="Result categories">
@@ -616,7 +621,7 @@ let u = class extends Y {
                       <button type="button" class="link-btn" @click=${o(this, a, O)}>
                         Expand all
                       </button>
-                      <button type="button" class="link-btn" @click=${o(this, a, ge)}>
+                      <button type="button" class="link-btn" @click=${o(this, a, ve)}>
                         Collapse all
                       </button>
                     ` : ""}
@@ -629,7 +634,7 @@ let u = class extends Y {
                     </div>
                   ` : ""}
 
-              ${o(this, a, ke).call(this)}
+              ${o(this, a, Ce).call(this)}
             </div>
           </main>
 
@@ -638,7 +643,7 @@ let u = class extends Y {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize diff panel"
-            @pointerdown=${o(this, a, _e)}
+            @pointerdown=${o(this, a, ye)}
           ></div>
 
           <aside class="diff-panel" aria-label="Property differences">
@@ -655,13 +660,13 @@ let u = class extends Y {
   }
 };
 C = /* @__PURE__ */ new WeakMap();
-T = /* @__PURE__ */ new WeakMap();
 S = /* @__PURE__ */ new WeakMap();
+T = /* @__PURE__ */ new WeakMap();
 a = /* @__PURE__ */ new WeakSet();
-se = async function() {
+ne = async function() {
   this._isLoadingEnvironments = !0;
   try {
-    const e = await Se();
+    const e = await Ae();
     this._environments = e;
     const t = e.find((i) => i.isLocal)?.name ?? "Local", r = e.find((i) => !i.isLocal)?.name ?? e.find((i) => i.name !== t)?.name ?? "";
     this._environmentA = t, this._environmentB = r, this._statusMessage = e.length > 1 ? "Select two environments, then compare." : "Only Local is available. Configure remote ApiUrl values in appsettings.";
@@ -678,31 +683,31 @@ se = async function() {
     this._isLoadingEnvironments = !1;
   }
 };
-ne = function(e) {
+ae = function(e) {
   this._environmentA = e.target.value;
 };
-ae = function(e) {
+oe = function(e) {
   this._environmentB = e.target.value;
 };
-oe = function(e) {
+le = function(e) {
   this._search = e.target.value, this._listScrollTop = 0;
 };
-le = function(e) {
+de = function(e) {
   this._statusFilter = e.target.value, this._listScrollTop = 0;
 };
-de = function(e) {
+ce = function(e) {
   this._cultureFilter = e.target.value, this._listScrollTop = 0;
 };
-ce = function(e) {
+pe = function(e) {
   this._contentTypeFilter = e.target.value, this._listScrollTop = 0;
 };
-pe = function(e) {
+ue = function(e) {
   this._pathFilter = e.target.value, this._listScrollTop = 0;
 };
-ue = function(e) {
+he = function(e) {
   this._showIgnored = e.target.checked, this._listScrollTop = 0;
 };
-he = function() {
+me = function() {
   const e = this._environmentA;
   this._environmentA = this._environmentB, this._environmentB = e;
 };
@@ -731,48 +736,48 @@ D = function(e) {
 L = function() {
   return (this._result?.items ?? []).filter((t) => (t.moduleAlias ?? "content").toLowerCase() === H[this._activeTab] && o(this, a, D).call(this, t));
 };
-me = function(e) {
+fe = function(e) {
   return (this._result?.items ?? []).filter((r) => (r.moduleAlias ?? "content").toLowerCase() === H[e] && o(this, a, D).call(this, r)).length;
 };
-fe = function() {
+ge = function() {
   const e = (this._result?.items ?? []).filter(
     (t) => (t.moduleAlias ?? "content").toLowerCase() === H[this._activeTab]
   );
-  return Re(e);
+  return De(e);
 };
 O = function() {
-  const e = o(this, a, L).call(this), t = Z(e), r = /* @__PURE__ */ new Set(), i = (s) => {
+  const e = o(this, a, L).call(this), t = ee(e), r = /* @__PURE__ */ new Set(), i = (s) => {
     for (const n of s)
       n.children.length > 0 && (r.add(n.path), i(n.children));
   };
   i(t), this._expandedPaths = r;
 };
-ge = function() {
+ve = function() {
   this._expandedPaths = /* @__PURE__ */ new Set();
 };
-ve = function(e, t) {
+be = function(e, t) {
   t.stopPropagation();
   const r = new Set(this._expandedPaths);
   r.has(e) ? r.delete(e) : r.add(e), this._expandedPaths = r;
 };
-be = function(e) {
+_e = function(e) {
   this._selectedItem = e;
 };
 W = function(e) {
   const t = e.target;
   this._listScrollTop = t.scrollTop, this._listViewportHeight = t.clientHeight;
 };
-_e = function(e) {
-  e.preventDefault(), z(this, T, e.clientX), z(this, S, this._diffPanelWidth);
+ye = function(e) {
+  e.preventDefault(), z(this, S, e.clientX), z(this, T, this._diffPanelWidth);
   const t = (i) => {
-    const s = P(this, T) - i.clientX, n = Math.min(40, Math.max(14, P(this, S) + s / 16));
+    const s = P(this, S) - i.clientX, n = Math.min(40, Math.max(14, P(this, T) + s / 16));
     this._diffPanelWidth = n;
   }, r = () => {
     window.removeEventListener("pointermove", t), window.removeEventListener("pointerup", r);
   };
   window.addEventListener("pointermove", t), window.addEventListener("pointerup", r);
 };
-ye = async function() {
+we = async function() {
   if (!this._environmentA || !this._environmentB) {
     this._statusMessage = "Select both Environment A and Environment B.";
     return;
@@ -786,7 +791,7 @@ ye = async function() {
     this._progress < 85 && (this._progress += 5);
   }, 200);
   try {
-    const t = await Ae({
+    const t = await Ee({
       environmentA: this._environmentA,
       environmentB: this._environmentB,
       culture: this._cultureFilter || void 0,
@@ -827,7 +832,7 @@ _ = function(e, t, r) {
     `;
 };
 w = function(e, t) {
-  const r = this._result ? o(this, a, me).call(this, e) : null;
+  const r = this._result ? o(this, a, fe).call(this, e) : null;
   return h`
       <button
         type="button"
@@ -841,13 +846,13 @@ w = function(e, t) {
     `;
 };
 V = function(e, t = 0) {
-  const r = A(e.status), i = We[r] ?? "•";
+  const r = A(e.status), i = Ve[r] ?? "•";
   return h`
       <button
         type="button"
         class="result-row status-${r.toLowerCase()} ${this._selectedItem?.id === e.id ? "is-selected" : ""}"
         style=${`--indent:${t}`}
-        @click=${() => o(this, a, be).call(this, e)}
+        @click=${() => o(this, a, _e).call(this, e)}
       >
         <span class="result-icon" aria-hidden="true">${i}</span>
         <span class="result-status">${r}</span>
@@ -858,14 +863,14 @@ V = function(e, t = 0) {
       </button>
     `;
 };
-we = function(e, t) {
+$e = function(e, t) {
   const r = this._expandedPaths.has(e.path), i = e.item;
   return i ? o(this, a, V).call(this, i, t) : h`
       <button
         type="button"
         class="tree-folder"
         style=${`--indent:${t}`}
-        @click=${(s) => o(this, a, ve).call(this, e.path, s)}
+        @click=${(s) => o(this, a, be).call(this, e.path, s)}
       >
         <span class="tree-chevron ${r ? "is-open" : ""}" aria-hidden="true">›</span>
         <span class="tree-folder-label">${e.label}</span>
@@ -873,8 +878,8 @@ we = function(e, t) {
       </button>
     `;
 };
-$e = function(e) {
-  const t = re(
+xe = function(e) {
+  const t = ie(
     this._listScrollTop,
     this._listViewportHeight,
     e.length,
@@ -894,11 +899,11 @@ $e = function(e) {
       </div>
     `;
 };
-xe = function(e) {
-  const t = Z(e), r = ee(t, this._expandedPaths);
+ke = function(e) {
+  const t = ee(e), r = te(t, this._expandedPaths);
   if (r.length === 0)
     return h`<div class="empty"><p>No items to display.</p></div>`;
-  const i = re(
+  const i = ie(
     this._listScrollTop,
     this._listViewportHeight,
     r.length,
@@ -908,27 +913,27 @@ xe = function(e) {
       <div class="virtual-scroll" @scroll=${o(this, a, W)} role="tree">
         <div class="virtual-spacer" style="height:${i.totalHeight}px">
           <div class="virtual-window" style="transform:translateY(${i.offsetTop}px)">
-            ${s.map(({ node: n, depth: l }) => o(this, a, we).call(this, n, l))}
+            ${s.map(({ node: n, depth: l }) => o(this, a, $e).call(this, n, l))}
           </div>
         </div>
       </div>
     `;
 };
-ke = function() {
+Ce = function() {
   const e = o(this, a, L).call(this);
   return this._result ? e.length === 0 ? h`
         <div class="empty">
           <p>No items match the current tab/filters.</p>
         </div>
-      ` : this._viewMode === "tree" ? o(this, a, xe).call(this, e) : o(this, a, $e).call(this, e) : h`
+      ` : this._viewMode === "tree" ? o(this, a, ke).call(this, e) : o(this, a, xe).call(this, e) : h`
         <div class="empty">
           <p>No comparison results yet.</p>
           <p class="hint">Select environments and click Compare.</p>
         </div>
       `;
 };
-Ce = function() {
-  const e = o(this, a, fe).call(this);
+Se = function() {
+  const e = o(this, a, ge).call(this);
   return h`
       <aside class="filters" aria-label="Filters">
         <h2>Filters</h2>
@@ -939,13 +944,13 @@ Ce = function() {
             type="search"
             placeholder="Instant search…"
             .value=${this._search}
-            @input=${o(this, a, oe)}
+            @input=${o(this, a, le)}
           />
         </label>
 
         <label>
           <span>Status</span>
-          <select .value=${this._statusFilter} @change=${o(this, a, le)}>
+          <select .value=${this._statusFilter} @change=${o(this, a, de)}>
             <option value="">All statuses</option>
             <option value="Identical">Identical</option>
             <option value="Added">Added</option>
@@ -957,7 +962,7 @@ Ce = function() {
 
         <label>
           <span>Culture</span>
-          <select .value=${this._cultureFilter} @change=${o(this, a, de)}>
+          <select .value=${this._cultureFilter} @change=${o(this, a, ce)}>
             <option value="">All cultures</option>
             ${e.cultures.map(
     (t) => h`<option value=${t}>${t}</option>`
@@ -967,7 +972,7 @@ Ce = function() {
 
         <label>
           <span>Content type</span>
-          <select .value=${this._contentTypeFilter} @change=${o(this, a, ce)}>
+          <select .value=${this._contentTypeFilter} @change=${o(this, a, pe)}>
             <option value="">All types</option>
             ${e.contentTypes.map(
     (t) => h`<option value=${t}>${t}</option>`
@@ -981,7 +986,7 @@ Ce = function() {
             type="search"
             placeholder="/home…"
             .value=${this._pathFilter}
-            @input=${o(this, a, pe)}
+            @input=${o(this, a, ue)}
           />
         </label>
 
@@ -989,7 +994,7 @@ Ce = function() {
           <input
             type="checkbox"
             .checked=${this._showIgnored}
-            @change=${o(this, a, ue)}
+            @change=${o(this, a, he)}
           />
           <span>Show ignored items</span>
         </label>
@@ -1562,9 +1567,9 @@ m([
 u = m([
   q("envcompare-dashboard")
 ], u);
-const Ue = u;
+const je = u;
 export {
   u as EnvCompareDashboardElement,
-  Ue as default
+  je as default
 };
-//# sourceMappingURL=envcompare-dashboard.element-DwyH81zH.js.map
+//# sourceMappingURL=envcompare-dashboard.element-CppoEOAt.js.map

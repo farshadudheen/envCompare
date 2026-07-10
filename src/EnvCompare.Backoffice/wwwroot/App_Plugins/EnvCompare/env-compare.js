@@ -3,7 +3,7 @@ const a = [
     name: "EnvCompare Entrypoint",
     alias: "EnvCompare.Entrypoint",
     type: "backofficeEntryPoint",
-    js: () => import("./entrypoint-mrq7lDLw.js")
+    js: () => import("./entrypoint-DICCKGz1.js")
   }
 ], e = [
   {
@@ -11,7 +11,7 @@ const a = [
     alias: "EnvCompare.Dashboard.Compare",
     name: "EnvCompare Dashboard",
     elementName: "envcompare-dashboard",
-    element: () => import("./envcompare-dashboard.element-DwyH81zH.js"),
+    element: () => import("./envcompare-dashboard.element-CppoEOAt.js"),
     weight: 100,
     meta: {
       label: "EnvCompare",
