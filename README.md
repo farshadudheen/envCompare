@@ -7,7 +7,7 @@ Umbraco 17 NuGet package for comparing content between Umbraco Cloud environment
 Add the package to your Umbraco 17 site:
 
 ```xml
-<PackageReference Include="EnvCompare" Version="0.1.0" />
+<PackageReference Include="EnvCompare" Version="0.1.2" />
 ```
 
 The package auto-registers via `EnvCompareComposer` (`IUmbracoBuilder`). On first run, the package migration creates the `EnvComparePackageState` table to track installed version for future upgrades.
@@ -36,7 +36,7 @@ Prerequisites: .NET 10 SDK, Node.js 20+ (for the backoffice Client Vite build).
 dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release
 ```
 
-Output: `artifacts/EnvCompare.0.1.0.nupkg`
+Output: `artifacts/EnvCompare.0.1.2.nupkg`
 
 Skip the Client build when iterating on C# only:
 
@@ -60,7 +60,7 @@ EnvCompare.sln
 - Modules: content, media, settings (languages), dictionary (stub)
 - Read-only, admin-only backoffice dashboard under **Settings → EnvCompare**
 - Git-style diff panel, virtual scrolling, tree view, rich filters
-- `POST /umbraco/envcompare/api/v1/compare`
+- `POST /umbraco/management/api/v1/envcompare/compare`
 
 ## Client development
 
@@ -79,3 +79,35 @@ Assets emit to `src/EnvCompare.Backoffice/wwwroot/App_Plugins/EnvCompare/`.
 | `8f4e2c1a-…` | `EnvCompareInitialMigration` | Creates `EnvComparePackageState` and records install version |
 
 Future package versions add new steps to `EnvCompareMigrationPlan`.
+
+## Troubleshooting install (NU1101)
+
+If restore fails with **Unable to find package EnvCompare.Core** or **EnvCompare.Infrastructure**, you are using an **old** `EnvCompare` nupkg that listed those as separate NuGet dependencies. The current package bundles all three DLLs into a single `EnvCompare` package.
+
+1. Rebuild the package from this repo:
+   ```bash
+   dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release
+   ```
+2. Copy `artifacts/EnvCompare.0.1.2.nupkg` to your local NuGet feed (or install directly).
+3. Remove any old `EnvCompare.0.1.0.nupkg` from your `local` / `local13packages` feed folders.
+4. In your Umbraco site, reference only the main package:
+   ```xml
+   <PackageReference Include="EnvCompare" Version="0.1.2" />
+   ```
+   Do **not** add `EnvCompare.Core` or `EnvCompare.Infrastructure` as separate package references.
+5. Clear the NuGet cache if the old metadata is still picked up:
+   ```bash
+   dotnet nuget locals all --clear
+   ```
+
+## Troubleshooting backoffice logout (EnvCompare screen only)
+
+If opening **Settings → EnvCompare** logs you out immediately, the dashboard was calling a non-Management API URL without a valid bearer token. Umbraco treats the 401 as a session failure and redirects to login.
+
+**Fixed in 0.17.3+** — backoffice calls use `/umbraco/management/api/v1/envcompare/...` with bearer auth via `umbHttpClient`.
+
+After upgrading to `EnvCompare` **0.1.2** or later:
+
+1. Restart the Umbraco site.
+2. Hard-refresh the backoffice (Ctrl+F5) so cached `/App_Plugins/EnvCompare/` scripts reload.
+3. Confirm in browser DevTools → Network that `GET /umbraco/management/api/v1/envcompare/environments` returns **200** (not 401).
