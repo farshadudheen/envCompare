@@ -15,11 +15,36 @@ import {
   type ComparisonItem,
   type ComparisonResult,
 } from "../api/compare-api.js";
+import "../components/envcompare-diff-panel.element.js";
+import {
+  buildComparisonTree,
+  collectFilterOptions,
+  flattenTree,
+  type TreeNode,
+} from "../utils/comparison-tree.js";
+import { getVirtualScrollRange } from "../utils/virtual-scroll.js";
 
 type ResultTab = "content" | "media" | "settings" | "dictionary";
+type ViewMode = "list" | "tree";
+
+const ROW_HEIGHT = 52;
+const TAB_MODULES: Record<ResultTab, string> = {
+  content: "content",
+  media: "media",
+  settings: "settings",
+  dictionary: "dictionary",
+};
+
+const STATUS_ICON: Record<string, string> = {
+  Identical: "✔",
+  Added: "＋",
+  Missing: "−",
+  Modified: "△",
+  Ignored: "○",
+};
 
 /**
- * EnvCompare dashboard: environments + comparison engine results.
+ * EnvCompare dashboard with virtual scrolling, tree view, git-style diffs, and rich filters.
  */
 @customElement("envcompare-dashboard")
 export class EnvCompareDashboardElement extends UmbLitElement {
@@ -48,10 +73,25 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   private _activeTab: ResultTab = "content";
 
   @state()
+  private _viewMode: ViewMode = "tree";
+
+  @state()
   private _search = "";
 
   @state()
   private _statusFilter = "";
+
+  @state()
+  private _cultureFilter = "";
+
+  @state()
+  private _contentTypeFilter = "";
+
+  @state()
+  private _pathFilter = "";
+
+  @state()
+  private _showIgnored = false;
 
   @state()
   private _result: ComparisonResult | null = null;
@@ -59,7 +99,21 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   @state()
   private _selectedItem: ComparisonItem | null = null;
 
+  @state()
+  private _expandedPaths = new Set<string>();
+
+  @state()
+  private _listScrollTop = 0;
+
+  @state()
+  private _listViewportHeight = 420;
+
+  @state()
+  private _diffPanelWidth = 22;
+
   #compareAbort: AbortController | null = null;
+  #resizeStartX = 0;
+  #resizeStartWidth = 22;
 
   override connectedCallback() {
     super.connectedCallback();
@@ -105,23 +159,41 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   }
 
   #onEnvironmentA(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this._environmentA = select.value;
+    this._environmentA = (event.target as HTMLSelectElement).value;
   }
 
   #onEnvironmentB(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this._environmentB = select.value;
+    this._environmentB = (event.target as HTMLSelectElement).value;
   }
 
   #onSearch(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this._search = input.value;
+    this._search = (event.target as HTMLInputElement).value;
+    this._listScrollTop = 0;
   }
 
   #onStatusFilter(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this._statusFilter = select.value;
+    this._statusFilter = (event.target as HTMLSelectElement).value;
+    this._listScrollTop = 0;
+  }
+
+  #onCultureFilter(event: Event) {
+    this._cultureFilter = (event.target as HTMLSelectElement).value;
+    this._listScrollTop = 0;
+  }
+
+  #onContentTypeFilter(event: Event) {
+    this._contentTypeFilter = (event.target as HTMLSelectElement).value;
+    this._listScrollTop = 0;
+  }
+
+  #onPathFilter(event: Event) {
+    this._pathFilter = (event.target as HTMLInputElement).value;
+    this._listScrollTop = 0;
+  }
+
+  #onShowIgnored(event: Event) {
+    this._showIgnored = (event.target as HTMLInputElement).checked;
+    this._listScrollTop = 0;
   }
 
   #swapEnvironments() {
@@ -130,39 +202,136 @@ export class EnvCompareDashboardElement extends UmbLitElement {
     this._environmentB = previousA;
   }
 
+  #matchesFilters(item: ComparisonItem): boolean {
+    const status = statusLabel(item.status);
+
+    if (!this._showIgnored && status === "Ignored") {
+      return false;
+    }
+
+    if (this._statusFilter && status.toLowerCase() !== this._statusFilter.toLowerCase()) {
+      return false;
+    }
+
+    if (this._cultureFilter && item.culture?.toLowerCase() !== this._cultureFilter.toLowerCase()) {
+      return false;
+    }
+
+    if (
+      this._contentTypeFilter &&
+      item.contentType?.toLowerCase() !== this._contentTypeFilter.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (this._pathFilter.trim()) {
+      const term = this._pathFilter.trim().toLowerCase();
+      if (!(item.path ?? "").toLowerCase().includes(term)) {
+        return false;
+      }
+    }
+
+    if (this._search.trim()) {
+      const term = this._search.trim().toLowerCase();
+      const haystack = [
+        item.name,
+        item.id,
+        item.path ?? "",
+        item.contentType ?? "",
+        item.differenceSummary ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(term)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   #visibleItems(): ComparisonItem[] {
     const items = this._result?.items ?? [];
     return items.filter((item) => {
       const module = (item.moduleAlias ?? "content").toLowerCase();
-      if (module !== this._activeTab) {
-        return false;
-      }
-
-      if (this._statusFilter) {
-        const label = statusLabel(item.status);
-        if (label.toLowerCase() !== this._statusFilter.toLowerCase()) {
-          return false;
-        }
-      }
-
-      if (this._search.trim()) {
-        const term = this._search.trim().toLowerCase();
-        const haystack = [
-          item.name,
-          item.id,
-          item.path ?? "",
-          item.contentType ?? "",
-          item.differenceSummary ?? "",
-        ]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(term)) {
-          return false;
-        }
-      }
-
-      return true;
+      return module === TAB_MODULES[this._activeTab] && this.#matchesFilters(item);
     });
+  }
+
+  #tabCount(tab: ResultTab): number {
+    const items = this._result?.items ?? [];
+    return items.filter((item) => {
+      const module = (item.moduleAlias ?? "content").toLowerCase();
+      return module === TAB_MODULES[tab] && this.#matchesFilters(item);
+    }).length;
+  }
+
+  #filterOptions() {
+    const tabItems = (this._result?.items ?? []).filter(
+      (item) => (item.moduleAlias ?? "content").toLowerCase() === TAB_MODULES[this._activeTab],
+    );
+    return collectFilterOptions(tabItems);
+  }
+
+  #expandAll() {
+    const items = this.#visibleItems();
+    const tree = buildComparisonTree(items);
+    const paths = new Set<string>();
+    const walk = (nodes: TreeNode[]) => {
+      for (const node of nodes) {
+        if (node.children.length > 0) {
+          paths.add(node.path);
+          walk(node.children);
+        }
+      }
+    };
+    walk(tree);
+    this._expandedPaths = paths;
+  }
+
+  #collapseAll() {
+    this._expandedPaths = new Set();
+  }
+
+  #toggleExpand(path: string, event: Event) {
+    event.stopPropagation();
+    const next = new Set(this._expandedPaths);
+    if (next.has(path)) {
+      next.delete(path);
+    } else {
+      next.add(path);
+    }
+    this._expandedPaths = next;
+  }
+
+  #selectItem(item: ComparisonItem) {
+    this._selectedItem = item;
+  }
+
+  #onListScroll(event: Event) {
+    const target = event.target as HTMLElement;
+    this._listScrollTop = target.scrollTop;
+    this._listViewportHeight = target.clientHeight;
+  }
+
+  #onResizeStart(event: PointerEvent) {
+    event.preventDefault();
+    this.#resizeStartX = event.clientX;
+    this.#resizeStartWidth = this._diffPanelWidth;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const delta = this.#resizeStartX - moveEvent.clientX;
+      const next = Math.min(40, Math.max(14, this.#resizeStartWidth + delta / 16));
+      this._diffPanelWidth = next;
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   }
 
   async #onCompare() {
@@ -180,26 +349,38 @@ export class EnvCompareDashboardElement extends UmbLitElement {
     this.#compareAbort = new AbortController();
 
     this._isComparing = true;
-    this._progress = 20;
+    this._progress = 15;
     this._selectedItem = null;
+    this._listScrollTop = 0;
     this._statusMessage = `Comparing ${this._environmentA} → ${this._environmentB}…`;
+
+    const progressTimer = window.setInterval(() => {
+      if (this._progress < 85) {
+        this._progress += 5;
+      }
+    }, 200);
 
     try {
       const result = await runComparison({
         environmentA: this._environmentA,
         environmentB: this._environmentB,
-        search: this._search || undefined,
+        culture: this._cultureFilter || undefined,
+        contentType: this._contentTypeFilter || undefined,
+        pathContains: this._pathFilter || undefined,
         status: this._statusFilter || undefined,
+        search: this._search || undefined,
       });
 
       this._result = result;
       this._progress = 100;
       this._statusMessage = `Compared ${result.totalCompared} item(s).`;
+      this.#expandAll();
     } catch (error) {
       this._progress = 0;
       this._statusMessage =
         error instanceof Error ? error.message : "Comparison failed.";
     } finally {
+      window.clearInterval(progressTimer);
       this._isComparing = false;
     }
   }
@@ -236,6 +417,7 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   }
 
   #renderTab(id: ResultTab, label: string) {
+    const count = this._result ? this.#tabCount(id) : null;
     return html`
       <button
         type="button"
@@ -243,15 +425,115 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         @click=${() => {
           this._activeTab = id;
           this._selectedItem = null;
+          this._listScrollTop = 0;
         }}
       >
-        ${label}
+        ${label}${count !== null ? html` <span class="tab-count">${count}</span>` : ""}
       </button>
+    `;
+  }
+
+  #renderResultRow(item: ComparisonItem, indent = 0) {
+    const status = statusLabel(item.status);
+    const icon = STATUS_ICON[status] ?? "•";
+
+    return html`
+      <button
+        type="button"
+        class="result-row status-${status.toLowerCase()} ${this._selectedItem?.id === item.id
+          ? "is-selected"
+          : ""}"
+        style=${`--indent:${indent}`}
+        @click=${() => this.#selectItem(item)}
+      >
+        <span class="result-icon" aria-hidden="true">${icon}</span>
+        <span class="result-status">${status}</span>
+        <span class="result-name">${item.name}</span>
+        <span class="result-meta"
+          >${item.contentType ?? "—"} · ${item.path ?? item.id}</span
+        >
+      </button>
+    `;
+  }
+
+  #renderTreeNode(node: TreeNode, depth: number) {
+    const expanded = this._expandedPaths.has(node.path);
+    const item = node.item;
+
+    if (item) {
+      return this.#renderResultRow(item, depth);
+    }
+
+    return html`
+      <button
+        type="button"
+        class="tree-folder"
+        style=${`--indent:${depth}`}
+        @click=${(e: Event) => this.#toggleExpand(node.path, e)}
+      >
+        <span class="tree-chevron ${expanded ? "is-open" : ""}" aria-hidden="true">›</span>
+        <span class="tree-folder-label">${node.label}</span>
+        <span class="tree-folder-meta">${node.children.length} children</span>
+      </button>
+    `;
+  }
+
+  #renderVirtualList(items: ComparisonItem[]) {
+    const range = getVirtualScrollRange(
+      this._listScrollTop,
+      this._listViewportHeight,
+      items.length,
+      ROW_HEIGHT,
+    );
+
+    const slice = items.slice(range.start, range.end);
+
+    return html`
+      <div
+        class="virtual-scroll"
+        @scroll=${this.#onListScroll}
+        role="list"
+      >
+        <div class="virtual-spacer" style="height:${range.totalHeight}px">
+          <div class="virtual-window" style="transform:translateY(${range.offsetTop}px)">
+            ${slice.map((item) => this.#renderResultRow(item))}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderTreeList(items: ComparisonItem[]) {
+    const tree = buildComparisonTree(items);
+    const flat = flattenTree(tree, this._expandedPaths);
+
+    if (flat.length === 0) {
+      return html`<div class="empty"><p>No items to display.</p></div>`;
+    }
+
+    const range = getVirtualScrollRange(
+      this._listScrollTop,
+      this._listViewportHeight,
+      flat.length,
+      ROW_HEIGHT,
+    );
+
+    const slice = flat.slice(range.start, range.end);
+
+    return html`
+      <div class="virtual-scroll" @scroll=${this.#onListScroll} role="tree">
+        <div class="virtual-spacer" style="height:${range.totalHeight}px">
+          <div class="virtual-window" style="transform:translateY(${range.offsetTop}px)">
+            ${slice.map(({ node, depth }) => this.#renderTreeNode(node, depth))}
+          </div>
+        </div>
+      </div>
     `;
   }
 
   #renderResults() {
     const items = this.#visibleItems();
+
     if (!this._result) {
       return html`
         <div class="empty">
@@ -269,65 +551,90 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       `;
     }
 
-    return html`
-      <div class="result-list" role="list">
-        ${items.map(
-          (item) => html`
-            <button
-              type="button"
-              class="result-row status-${statusLabel(item.status).toLowerCase()} ${this
-                ._selectedItem?.id === item.id
-                ? "is-selected"
-                : ""}"
-              role="listitem"
-              @click=${() => {
-                this._selectedItem = item;
-              }}
-            >
-              <span class="result-status">${statusLabel(item.status)}</span>
-              <span class="result-name">${item.name}</span>
-              <span class="result-meta"
-                >${item.contentType ?? "—"} · ${item.path ?? item.id}</span
-              >
-            </button>
-          `,
-        )}
-      </div>
-    `;
+    return this._viewMode === "tree"
+      ? this.#renderTreeList(items)
+      : this.#renderVirtualList(items);
   }
 
-  #renderDiffPanel() {
-    if (!this._selectedItem) {
-      return html`
-        <div class="empty">
-          <p>Select a result row to inspect differences.</p>
-          <p class="hint">Git-style property highlighting arrives in Step 6.</p>
-        </div>
-      `;
-    }
+  #renderFilters() {
+    const options = this.#filterOptions();
 
-    const item = this._selectedItem;
     return html`
-      <div class="diff-details">
-        <p><strong>${item.name}</strong></p>
-        <p class="hint">${item.id}</p>
-        <p><span class="badge">${statusLabel(item.status)}</span></p>
-        <p>${item.differenceSummary ?? "—"}</p>
-        <div class="diff-columns">
-          <div>
-            <h3>Environment A</h3>
-            <pre>${item.environmentAValue ?? "(missing)"}</pre>
-          </div>
-          <div>
-            <h3>Environment B</h3>
-            <pre>${item.environmentBValue ?? "(missing)"}</pre>
-          </div>
-        </div>
-      </div>
+      <aside class="filters" aria-label="Filters">
+        <h2>Filters</h2>
+
+        <label>
+          <span>Search</span>
+          <input
+            type="search"
+            placeholder="Instant search…"
+            .value=${this._search}
+            @input=${this.#onSearch}
+          />
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select .value=${this._statusFilter} @change=${this.#onStatusFilter}>
+            <option value="">All statuses</option>
+            <option value="Identical">Identical</option>
+            <option value="Added">Added</option>
+            <option value="Missing">Missing</option>
+            <option value="Modified">Modified</option>
+            <option value="Ignored">Ignored</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Culture</span>
+          <select .value=${this._cultureFilter} @change=${this.#onCultureFilter}>
+            <option value="">All cultures</option>
+            ${options.cultures.map(
+              (c) => html`<option value=${c}>${c}</option>`,
+            )}
+          </select>
+        </label>
+
+        <label>
+          <span>Content type</span>
+          <select .value=${this._contentTypeFilter} @change=${this.#onContentTypeFilter}>
+            <option value="">All types</option>
+            ${options.contentTypes.map(
+              (t) => html`<option value=${t}>${t}</option>`,
+            )}
+          </select>
+        </label>
+
+        <label>
+          <span>Path contains</span>
+          <input
+            type="search"
+            placeholder="/home…"
+            .value=${this._pathFilter}
+            @input=${this.#onPathFilter}
+          />
+        </label>
+
+        <label class="checkbox-row">
+          <input
+            type="checkbox"
+            .checked=${this._showIgnored}
+            @change=${this.#onShowIgnored}
+          />
+          <span>Show ignored items</span>
+        </label>
+
+        <p class="hint">
+          Filters apply instantly. Click Compare to push filters to the engine
+          for large sites.
+        </p>
+      </aside>
     `;
   }
 
   override render() {
+    const visibleCount = this.#visibleItems().length;
+
     return html`
       <div class="layout">
         <header class="toolbar">
@@ -376,14 +683,14 @@ export class EnvCompareDashboardElement extends UmbLitElement {
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
               @click=${this.#onCompare}
             >
-              Compare
+              ${this._isComparing ? "Comparing…" : "Compare"}
             </uui-button>
           </div>
 
           <div class="progress-block">
             <div class="progress-track" aria-hidden="true">
               <div
-                class="progress-fill"
+                class="progress-fill ${this._isComparing ? "is-active" : ""}"
                 style="width: ${this._progress}%"
               ></div>
             </div>
@@ -419,34 +726,11 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           )}
         </section>
 
-        <div class="workspace">
-          <aside class="filters" aria-label="Filters">
-            <h2>Filters</h2>
-            <label>
-              <span>Search</span>
-              <input
-                type="search"
-                placeholder="Instant search…"
-                .value=${this._search}
-                @input=${this.#onSearch}
-              />
-            </label>
-            <label>
-              <span>Status</span>
-              <select .value=${this._statusFilter} @change=${this.#onStatusFilter}>
-                <option value="">All statuses</option>
-                <option value="Identical">Identical</option>
-                <option value="Added">Added</option>
-                <option value="Missing">Missing</option>
-                <option value="Modified">Modified</option>
-                <option value="Ignored">Ignored</option>
-              </select>
-            </label>
-            <p class="hint">
-              Filters apply to the current result set. Re-run Compare to push
-              filters to the engine.
-            </p>
-          </aside>
+        <div
+          class="workspace"
+          style="--diff-width:${this._diffPanelWidth}rem"
+        >
+          ${this.#renderFilters()}
 
           <main class="results">
             <nav class="tabs" aria-label="Result categories">
@@ -456,15 +740,72 @@ export class EnvCompareDashboardElement extends UmbLitElement {
               ${this.#renderTab("dictionary", "Dictionary")}
             </nav>
 
-            <div class="tree-panel">
-              <h2>${this._activeTab}</h2>
+            <div class="tree-panel ${this._isComparing ? "is-loading" : ""}">
+              <div class="tree-toolbar">
+                <h2>${this._activeTab}</h2>
+                <span class="result-count">${visibleCount} visible</span>
+                <div class="view-toggle" role="group" aria-label="View mode">
+                  <button
+                    type="button"
+                    class="view-btn ${this._viewMode === "tree" ? "is-active" : ""}"
+                    @click=${() => {
+                      this._viewMode = "tree";
+                      this._listScrollTop = 0;
+                    }}
+                  >
+                    Tree
+                  </button>
+                  <button
+                    type="button"
+                    class="view-btn ${this._viewMode === "list" ? "is-active" : ""}"
+                    @click=${() => {
+                      this._viewMode = "list";
+                      this._listScrollTop = 0;
+                    }}
+                  >
+                    List
+                  </button>
+                </div>
+                ${this._viewMode === "tree"
+                  ? html`
+                      <button type="button" class="link-btn" @click=${this.#expandAll}>
+                        Expand all
+                      </button>
+                      <button type="button" class="link-btn" @click=${this.#collapseAll}>
+                        Collapse all
+                      </button>
+                    `
+                  : ""}
+              </div>
+
+              ${this._isComparing
+                ? html`
+                    <div class="loading-overlay" aria-live="polite">
+                      <div class="spinner" aria-hidden="true"></div>
+                      <p>Running comparison…</p>
+                    </div>
+                  `
+                : ""}
+
               ${this.#renderResults()}
             </div>
           </main>
 
+          <div
+            class="splitter"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize diff panel"
+            @pointerdown=${this.#onResizeStart}
+          ></div>
+
           <aside class="diff-panel" aria-label="Property differences">
             <h2>Differences</h2>
-            ${this.#renderDiffPanel()}
+            <envcompare-diff-panel
+              .item=${this._selectedItem}
+              .environmentA=${this._environmentA}
+              .environmentB=${this._environmentB}
+            ></envcompare-diff-panel>
           </aside>
         </div>
       </div>
@@ -509,7 +850,7 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       .toolbar {
         position: sticky;
         top: 0;
-        z-index: 2;
+        z-index: 3;
         padding: 1.1rem 1.25rem;
         display: grid;
         gap: 1rem;
@@ -543,6 +884,16 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         color: var(--muted);
       }
 
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .checkbox-row input {
+        width: auto;
+      }
+
       select,
       input[type="search"] {
         min-width: 10rem;
@@ -564,6 +915,26 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         height: 100%;
         background: linear-gradient(90deg, #1b264f, #3d7ea6);
         transition: width 240ms ease;
+      }
+
+      .progress-fill.is-active {
+        background: linear-gradient(
+          90deg,
+          #1b264f,
+          #3d7ea6,
+          #1b264f
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.2s linear infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 100% 0;
+        }
+        100% {
+          background-position: -100% 0;
+        }
       }
 
       .summary {
@@ -607,9 +978,9 @@ export class EnvCompareDashboardElement extends UmbLitElement {
 
       .workspace {
         display: grid;
-        grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) minmax(14rem, 20rem);
-        gap: var(--gap);
-        align-items: start;
+        grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr) 4px var(--diff-width, 22rem);
+        gap: 0 var(--gap);
+        align-items: stretch;
         min-height: 28rem;
       }
 
@@ -626,18 +997,33 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         display: grid;
         gap: 0.85rem;
         align-content: start;
+        max-height: calc(100vh - 9rem);
+        overflow: auto;
       }
 
       .filters h2,
-      .tree-panel h2,
       .diff-panel h2 {
         margin: 0 0 0.5rem;
         font-size: 1rem;
       }
 
+      .splitter {
+        cursor: col-resize;
+        background: transparent;
+        border-radius: 4px;
+        align-self: stretch;
+        touch-action: none;
+      }
+
+      .splitter:hover,
+      .splitter:active {
+        background: rgba(27, 38, 79, 0.12);
+      }
+
       .results {
         display: grid;
         gap: 0.75rem;
+        min-width: 0;
       }
 
       .tabs {
@@ -653,12 +1039,82 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         padding: 0.4rem 0.85rem;
         cursor: pointer;
         color: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
       }
 
       .tab.is-active {
         background: var(--accent);
         border-color: var(--accent);
         color: #fff;
+      }
+
+      .tab-count {
+        font-size: 0.72rem;
+        opacity: 0.85;
+        padding: 0.05rem 0.35rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .tab:not(.is-active) .tab-count {
+        background: var(--uui-color-surface-alt, #ececec);
+        color: var(--muted);
+      }
+
+      .tree-panel {
+        position: relative;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 0.65rem;
+        min-height: 26rem;
+      }
+
+      .tree-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+      }
+
+      .tree-toolbar h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .result-count {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .view-toggle {
+        display: inline-flex;
+        border: 1px solid var(--panel-border);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-left: auto;
+      }
+
+      .view-btn,
+      .link-btn {
+        border: none;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.65rem;
+      }
+
+      .view-btn.is-active {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .link-btn {
+        color: var(--accent);
+        text-decoration: underline;
+        padding: 0.2rem 0.35rem;
       }
 
       .empty {
@@ -673,36 +1129,62 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         color: var(--muted);
       }
 
-      .result-list {
-        display: grid;
-        gap: 0.4rem;
-        max-height: 28rem;
+      .virtual-scroll {
         overflow: auto;
+        max-height: 28rem;
+        min-height: 16rem;
+        border: 1px solid var(--panel-border);
+        border-radius: 8px;
+        background: var(--uui-color-surface-alt, #fafafa);
       }
 
-      .result-row {
+      .virtual-spacer {
+        position: relative;
+        width: 100%;
+      }
+
+      .virtual-window {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
         display: grid;
-        grid-template-columns: 6.5rem 1fr;
+        gap: 0.35rem;
+        padding: 0.35rem;
+      }
+
+      .result-row,
+      .tree-folder {
+        display: grid;
+        grid-template-columns: 1.5rem 5.5rem 1fr;
         grid-template-rows: auto auto;
-        gap: 0.15rem 0.75rem;
+        gap: 0.15rem 0.5rem;
         text-align: left;
         border: 1px solid var(--panel-border);
         border-radius: 6px;
-        background: transparent;
+        background: var(--panel-bg);
         color: inherit;
-        padding: 0.55rem 0.7rem;
+        padding: 0.5rem 0.65rem 0.5rem calc(0.65rem + var(--indent, 0) * 1rem);
         cursor: pointer;
+        min-height: 44px;
+        box-sizing: border-box;
       }
 
-      .result-row.is-selected {
+      .result-row.is-selected,
+      .tree-folder:hover,
+      .result-row:hover {
         border-color: var(--accent);
-        background: rgba(27, 38, 79, 0.06);
+        background: rgba(27, 38, 79, 0.05);
+      }
+
+      .result-icon {
+        grid-row: 1 / span 2;
+        align-self: center;
+        font-size: 0.9rem;
       }
 
       .result-status {
-        grid-row: 1 / span 2;
-        align-self: center;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 650;
       }
 
@@ -724,48 +1206,63 @@ export class EnvCompareDashboardElement extends UmbLitElement {
 
       .result-name {
         font-weight: 600;
+        grid-column: 3;
       }
 
       .result-meta,
-      .diff-details .hint {
+      .tree-folder-meta {
         color: var(--muted);
-        font-size: 0.8rem;
+        font-size: 0.78rem;
+        grid-column: 3;
       }
 
-      .diff-details {
-        display: grid;
-        gap: 0.65rem;
+      .tree-folder {
+        grid-template-columns: 1rem 1fr auto;
+        grid-template-rows: auto;
+        align-items: center;
       }
 
-      .diff-columns {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-      }
-
-      .diff-columns h3 {
-        margin: 0 0 0.35rem;
-        font-size: 0.85rem;
-      }
-
-      .diff-columns pre {
-        margin: 0;
-        white-space: pre-wrap;
-        word-break: break-word;
-        padding: 0.65rem;
-        border-radius: 6px;
-        border: 1px solid var(--panel-border);
-        background: var(--uui-color-surface-alt, #f6f6f8);
-        font-size: 0.8rem;
-      }
-
-      .badge {
+      .tree-chevron {
         display: inline-block;
-        padding: 0.15rem 0.5rem;
-        border-radius: 999px;
-        background: var(--accent);
-        color: #fff;
-        font-size: 0.75rem;
+        transition: transform 120ms ease;
+        color: var(--muted);
+      }
+
+      .tree-chevron.is-open {
+        transform: rotate(90deg);
+      }
+
+      .tree-folder-label {
+        font-weight: 600;
+      }
+
+      .loading-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: grid;
+        place-content: center;
+        gap: 0.75rem;
+        background: rgba(255, 255, 255, 0.72);
+        border-radius: inherit;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .spinner {
+        width: 2rem;
+        height: 2rem;
+        margin: 0 auto;
+        border: 3px solid var(--panel-border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       @media (max-width: 1100px) {
@@ -777,8 +1274,17 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           grid-template-columns: 1fr;
         }
 
+        .splitter {
+          display: none;
+        }
+
         .filters {
           position: static;
+          max-height: none;
+        }
+
+        .view-toggle {
+          margin-left: 0;
         }
       }
 
@@ -793,6 +1299,10 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           background:
             radial-gradient(circle at top right, rgba(61, 126, 166, 0.12), transparent 42%),
             var(--uui-color-surface-alt, #141418);
+        }
+
+        .loading-overlay {
+          background: rgba(20, 20, 24, 0.78);
         }
       }
     `,

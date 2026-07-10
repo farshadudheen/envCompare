@@ -24,8 +24,8 @@ EnvCompare.sln
 | 3 | Done | Dashboard shell |
 | 4 | Done | Environment abstraction implementations |
 | 5 | Done | Comparison engine |
-| 6 | Next | Full backoffice UI |
-| 7 | Pending | Meaningful unit tests |
+| 6 | Done | Full backoffice UI |
+| 7 | Done | Meaningful unit tests |
 
 ## Prerequisites
 
@@ -107,6 +107,26 @@ Remote URLs should be the site root. The provider calls `umbraco/envcompare/api/
 API: `POST /umbraco/envcompare/api/v1/compare`
 
 Supports cancellation, progress reporting, ignore lists from config, and request filters (status/search/path/type/culture).
+
+## Dashboard UI (Step 6)
+
+After building the Client, the dashboard includes:
+
+- **Git-style diff panel** — side-by-side values with added/removed highlighting
+- **Virtual scrolling** — windowed rendering for large result sets
+- **Tree view** — expandable hierarchy from Umbraco paths (toggle List/Tree)
+- **Rich filters** — status, culture, content type, path, search, show/hide ignored
+- **Instant client-side filtering** — filters apply without re-running Compare
+- **Resizable diff panel** — drag the splitter between results and differences
+- **Tab counts**, status icons, loading overlay, sticky toolbar/filters
+
+## Tests (Step 7)
+
+```bash
+dotnet test
+```
+
+Coverage includes the comparison engine, all comparer modules, result filtering/aggregation, tree loading, environment registry, and cache behavior.
 
 ## Architecture notes
 
