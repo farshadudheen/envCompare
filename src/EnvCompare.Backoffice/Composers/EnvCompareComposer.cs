@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using EnvCompare.Backoffice.Authorization;
 using EnvCompare.Backoffice.DependencyInjection;
 using EnvCompare.Infrastructure.Migrations;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -25,6 +26,8 @@ public sealed class EnvCompareComposer : IComposer
     {
         builder.AddEnvCompare();
         builder.PackageMigrationPlans().Add<EnvCompareMigrationPlan>();
+
+        builder.Services.AddSingleton<EnvComparePeerApiKeyFilter>();
 
         builder.Services.AddSingleton<IOperationIdHandler, EnvCompareOperationIdHandler>();
 

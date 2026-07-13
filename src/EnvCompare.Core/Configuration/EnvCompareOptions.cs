@@ -35,6 +35,12 @@ public sealed class EnvCompareOptions
     /// Content paths ignored during comparison.
     /// </summary>
     public IList<string> IgnoredPaths { get; init; } = [];
+
+    /// <summary>
+    /// Shared secret for inbound peer API calls. Remote callers must send this as Bearer token
+    /// in their environment's <c>Authentication</c> setting.
+    /// </summary>
+    public string? PeerApiKey { get; init; }
 }
 
 /// <summary>
@@ -53,7 +59,33 @@ public sealed class RemoteEnvironmentOptions
     public string? ApiUrl { get; init; }
 
     /// <summary>
-    /// Authentication configuration key or token placeholder (not stored as secret in code).
+    /// EnvCompare peer API key sent as <c>Authorization: Bearer {value}</c>.
+    /// Must match the remote site's <see cref="EnvCompareOptions.PeerApiKey"/>.
     /// </summary>
     public string? Authentication { get; init; }
+
+    /// <summary>
+    /// Umbraco Cloud Basic Auth shared secret for the remote site (when Public Access is enabled).
+    /// Sent as <see cref="BasicAuthSharedSecretHeader"/> so peer API calls are not blocked.
+    /// Copy from the target Cloud environment's
+    /// <c>Umbraco:CMS:BasicAuth:SharedSecret:Value</c> setting.
+    /// </summary>
+    public string? BasicAuthSharedSecret { get; init; }
+
+    /// <summary>
+    /// Header name for <see cref="BasicAuthSharedSecret"/>.
+    /// Defaults to <c>X-Authentication-Shared-Secret</c>.
+    /// </summary>
+    public string? BasicAuthSharedSecretHeader { get; init; }
+}
+
+/// <summary>
+/// Default Umbraco Basic Auth bypass header (see Umbraco:CMS:BasicAuth:SharedSecret).
+/// </summary>
+public static class UmbracoBasicAuthDefaults
+{
+    /// <summary>
+    /// Default shared-secret header name used by Umbraco Basic Auth.
+    /// </summary>
+    public const string SharedSecretHeaderName = "X-Authentication-Shared-Secret";
 }

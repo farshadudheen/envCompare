@@ -1,4 +1,4 @@
-using Asp.Versioning;
+using EnvCompare.Backoffice.Authorization;
 using EnvCompare.Backoffice.Models;
 using EnvCompare.Core.Abstractions;
 using EnvCompare.Core.Models;
@@ -10,12 +10,12 @@ namespace EnvCompare.Backoffice.Controllers;
 
 /// <summary>
 /// HTTP contract for remote EnvCompare installs (server-to-server tree snapshots).
-/// Called at <c>/umbraco/envcompare/api/v1/...</c> on peer sites.
+/// Fixed route <c>/envcompare/api/v1/...</c> (outside <c>/umbraco/</c> to avoid backoffice auth redirects).
+/// Routes are registered in <see cref="Composers.EnvComparePeerApiPipelineComposer"/> with <c>ShortCircuit()</c>
+/// (conventional routing — not attribute routing).
 /// </summary>
-[ApiController]
-[ApiVersion("1.0")]
-[Route("umbraco/envcompare/api/v{version:apiVersion}")]
 [AllowAnonymous]
+[ServiceFilter(typeof(EnvComparePeerApiKeyFilter))]
 public sealed class EnvComparePeerApiController : ControllerBase
 {
     private readonly IEnvironmentProviderRegistry _registry;
@@ -31,21 +31,18 @@ public sealed class EnvComparePeerApiController : ControllerBase
     /// <summary>
     /// Health ping used to verify the package API is loaded.
     /// </summary>
-    [HttpGet("ping")]
     [ProducesResponseType<string>(StatusCodes.Status200OK)]
     public string Ping() => "Pong";
 
     /// <summary>
     /// Health endpoint used by remote providers.
     /// </summary>
-    [HttpGet("health")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Health() => Ok(new { status = "ok", package = Constants.PackageId });
 
     /// <summary>
     /// Paged content tree for the local environment (peer contract for remotes).
     /// </summary>
-    [HttpGet("content")]
     [ProducesResponseType<PagedResultDto<ContentNodeSnapshot>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResultDto<ContentNodeSnapshot>>> GetContent(
         [FromQuery] Guid? parentKey,
@@ -64,7 +61,6 @@ public sealed class EnvComparePeerApiController : ControllerBase
     /// <summary>
     /// Single content node from the local environment.
     /// </summary>
-    [HttpGet("content/{key:guid}")]
     [ProducesResponseType<ContentNodeSnapshot>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ContentNodeSnapshot>> GetContentByKey(
@@ -79,7 +75,6 @@ public sealed class EnvComparePeerApiController : ControllerBase
     /// <summary>
     /// Paged media tree for the local environment.
     /// </summary>
-    [HttpGet("media")]
     [ProducesResponseType<PagedResultDto<MediaNodeSnapshot>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResultDto<MediaNodeSnapshot>>> GetMedia(
         [FromQuery] Guid? parentKey,
@@ -97,7 +92,6 @@ public sealed class EnvComparePeerApiController : ControllerBase
     /// <summary>
     /// Single media node from the local environment.
     /// </summary>
-    [HttpGet("media/{key:guid}")]
     [ProducesResponseType<MediaNodeSnapshot>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MediaNodeSnapshot>> GetMediaByKey(
@@ -112,7 +106,6 @@ public sealed class EnvComparePeerApiController : ControllerBase
     /// <summary>
     /// Languages configured on the local environment.
     /// </summary>
-    [HttpGet("languages")]
     [ProducesResponseType<IReadOnlyList<LanguageSnapshot>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<LanguageSnapshot>>> GetLanguages(
         CancellationToken cancellationToken)

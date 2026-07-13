@@ -12,7 +12,7 @@
     <Product>EnvCompare</Product>
     <Title>EnvCompare</Title>
     <!-- Single source of truth for the NuGet package version (Visual Studio "Package version" edits this). -->
-    <Version>0.17.4</Version>
+    <Version>0.17.9</Version>
     <Description>Compare content between Umbraco Cloud environments from the backoffice.</Description>
     <PackageTags>umbraco;umbraco-package;umbraco17;cloud;compare</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
