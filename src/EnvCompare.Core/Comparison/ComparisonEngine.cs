@@ -1,4 +1,5 @@
 using EnvCompare.Core.Abstractions;
+using EnvCompare.Core.Caching;
 using EnvCompare.Core.Configuration;
 using EnvCompare.Core.Models;
 using Microsoft.Extensions.Options;
@@ -13,6 +14,7 @@ public sealed class ComparisonEngine : IComparisonEngine
     private readonly IEnvironmentProviderRegistry _registry;
     private readonly IEnumerable<IComparerModule> _modules;
     private readonly IOptionsMonitor<EnvCompareOptions> _options;
+    private readonly IEnvironmentCache _cache;
 
     /// <summary>
     /// Creates the comparison engine.
@@ -20,11 +22,13 @@ public sealed class ComparisonEngine : IComparisonEngine
     public ComparisonEngine(
         IEnvironmentProviderRegistry registry,
         IEnumerable<IComparerModule> modules,
-        IOptionsMonitor<EnvCompareOptions> options)
+        IOptionsMonitor<EnvCompareOptions> options,
+        IEnvironmentCache cache)
     {
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _modules = modules ?? throw new ArgumentNullException(nameof(modules));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     }
 
     /// <inheritdoc />
@@ -46,6 +50,9 @@ public sealed class ComparisonEngine : IComparisonEngine
         {
             throw new ArgumentException("Environment A and B must be different.", nameof(request));
         }
+
+        // Always read fresh schema/content snapshots for each compare run.
+        _cache.Clear();
 
         var providerA = _registry.GetByName(request.EnvironmentA)
             ?? throw new InvalidOperationException($"Environment '{request.EnvironmentA}' was not found.");

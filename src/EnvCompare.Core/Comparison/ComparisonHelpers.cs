@@ -67,4 +67,7 @@ internal static class ComparisonHelpers
         DifferenceType.Ignored => "Ignored by configuration",
         _ => status.ToString()
     };
+
+    public static string DescribeOnlyInEnvironment(string environmentName)
+        => $"Only in {environmentName}";
 }

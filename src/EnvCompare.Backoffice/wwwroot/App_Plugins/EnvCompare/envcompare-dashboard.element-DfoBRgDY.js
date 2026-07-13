@@ -841,11 +841,7 @@ $e = async function() {
   try {
     const t = await Fe({
       environmentA: this._environmentA,
-      environmentB: this._environmentB,
-      culture: this._cultureFilter || void 0,
-      contentType: this._contentTypeFilter || void 0,
-      status: this._statusFilter || void 0,
-      search: this._search || void 0
+      environmentB: this._environmentB
     });
     this._result = t, this._progress = 100, this._statusMessage = `Compared ${t.totalCompared} item(s).`, a(this, s, V).call(this);
   } catch (t) {
@@ -1037,8 +1033,9 @@ Te = function() {
         </label>
 
         <p class="hint">
-          Filters apply instantly. Click Compare to push filters to the engine
-          for large sites.
+          Filters apply instantly on the result grid. New document types appear
+          under <strong>Settings</strong> with status <strong>Missing</strong>
+          when they exist only in Environment A (e.g. Local).
         </p>
       </aside>
     `;
@@ -1711,4 +1708,4 @@ export {
   u as EnvCompareDashboardElement,
   qe as default
 };
-//# sourceMappingURL=envcompare-dashboard.element-M8ID-abq.js.map
+//# sourceMappingURL=envcompare-dashboard.element-DfoBRgDY.js.map

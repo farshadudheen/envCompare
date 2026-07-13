@@ -171,14 +171,13 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
                 ct.ThrowIfCancellationRequested();
                 var types = _contentTypeService
                     .GetAll()
-                    .Where(t => !t.IsElement)
                     .OrderBy(t => t.Alias, StringComparer.OrdinalIgnoreCase)
                     .Select(SnapshotMapper.ToContentTypeSnapshot)
                     .ToArray();
 
                 return Task.FromResult<IReadOnlyList<ContentTypeSnapshot>>(types);
             },
-            absoluteExpiration: TimeSpan.FromMinutes(5),
+            absoluteExpiration: null,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -201,7 +200,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
 
                 return Task.FromResult<IReadOnlyList<ContentTypeSnapshot>>(types);
             },
-            absoluteExpiration: TimeSpan.FromMinutes(5),
+            absoluteExpiration: null,
             cancellationToken).ConfigureAwait(false);
     }
 

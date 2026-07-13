@@ -366,10 +366,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       const result = await runComparison({
         environmentA: this._environmentA,
         environmentB: this._environmentB,
-        culture: this._cultureFilter || undefined,
-        contentType: this._contentTypeFilter || undefined,
-        status: this._statusFilter || undefined,
-        search: this._search || undefined,
       });
 
       this._result = result;
@@ -616,8 +612,9 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         </label>
 
         <p class="hint">
-          Filters apply instantly. Click Compare to push filters to the engine
-          for large sites.
+          Filters apply instantly on the result grid. New document types appear
+          under <strong>Settings</strong> with status <strong>Missing</strong>
+          when they exist only in Environment A (e.g. Local).
         </p>
       </aside>
     `;

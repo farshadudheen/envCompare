@@ -131,7 +131,13 @@ public sealed class SettingsComparer : IComparerModule
     {
         var typesA = await context.EnvironmentA.GetDocumentTypesAsync(cancellationToken).ConfigureAwait(false);
         var typesB = await context.EnvironmentB.GetDocumentTypesAsync(cancellationToken).ConfigureAwait(false);
-        return CompareContentTypes(typesA, typesB, "Document Type", context.Options, cancellationToken);
+        return CompareContentTypes(
+            typesA,
+            typesB,
+            context.EnvironmentA.Name,
+            context.EnvironmentB.Name,
+            context.Options,
+            cancellationToken);
     }
 
     private static async Task<IReadOnlyList<ComparisonItem>> CompareMediaTypesAsync(
@@ -140,16 +146,27 @@ public sealed class SettingsComparer : IComparerModule
     {
         var typesA = await context.EnvironmentA.GetMediaTypesAsync(cancellationToken).ConfigureAwait(false);
         var typesB = await context.EnvironmentB.GetMediaTypesAsync(cancellationToken).ConfigureAwait(false);
-        return CompareContentTypes(typesA, typesB, "Media Type", context.Options, cancellationToken);
+        return CompareContentTypes(
+            typesA,
+            typesB,
+            context.EnvironmentA.Name,
+            context.EnvironmentB.Name,
+            context.Options,
+            cancellationToken,
+            static type => "Media Type");
     }
 
     private static IReadOnlyList<ComparisonItem> CompareContentTypes(
         IReadOnlyList<ContentTypeSnapshot> typesA,
         IReadOnlyList<ContentTypeSnapshot> typesB,
-        string contentTypeLabel,
+        string environmentAName,
+        string environmentBName,
         EnvCompareOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<ContentTypeSnapshot, string>? labelFactory = null)
     {
+        labelFactory ??= static type => type.IsElement ? "Element Type" : "Document Type";
+
         var mapA = typesA.ToDictionary(t => t.Alias, StringComparer.OrdinalIgnoreCase);
         var mapB = typesB.ToDictionary(t => t.Alias, StringComparer.OrdinalIgnoreCase);
         var aliases = mapA.Keys.Union(mapB.Keys, StringComparer.OrdinalIgnoreCase).ToArray();
@@ -172,12 +189,12 @@ public sealed class SettingsComparer : IComparerModule
                     ModuleAlias,
                     alias,
                     typeB.Name,
-                    contentTypeLabel,
+                    labelFactory(typeB),
                     path: null,
                     DifferenceType.Added,
                     null,
                     ContentTypeSnapshotComparer.Format(typeB),
-                    ComparisonHelpers.DescribeStatus(DifferenceType.Added)));
+                    ComparisonHelpers.DescribeOnlyInEnvironment(environmentBName)));
                 continue;
             }
 
@@ -187,12 +204,12 @@ public sealed class SettingsComparer : IComparerModule
                     ModuleAlias,
                     alias,
                     typeA.Name,
-                    contentTypeLabel,
+                    labelFactory(typeA),
                     path: null,
                     DifferenceType.Missing,
                     ContentTypeSnapshotComparer.Format(typeA),
                     null,
-                    ComparisonHelpers.DescribeStatus(DifferenceType.Missing)));
+                    ComparisonHelpers.DescribeOnlyInEnvironment(environmentAName)));
                 continue;
             }
 
@@ -202,7 +219,7 @@ public sealed class SettingsComparer : IComparerModule
                 ModuleAlias,
                 alias,
                 typeA!.Name,
-                contentTypeLabel,
+                labelFactory(typeA),
                 path: null,
                 status,
                 ContentTypeSnapshotComparer.Format(typeA),
