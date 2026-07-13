@@ -29,7 +29,8 @@ internal static class SnapshotMapper
             Level: content.Level,
             SortOrder: content.SortOrder,
             Published: content.Published,
-            Cultures: cultures);
+            Cultures: cultures,
+            Properties: PropertyValueSerializer.ExtractContentProperties(content));
     }
 
     public static MediaNodeSnapshot ToMediaSnapshot(IMedia media, Guid? parentKey)
@@ -51,6 +52,69 @@ internal static class SnapshotMapper
             Path: media.Path,
             Level: media.Level,
             SortOrder: media.SortOrder,
-            FileName: fileName);
+            FileName: fileName,
+            Properties: PropertyValueSerializer.ExtractMediaProperties(media));
+    }
+
+    public static ContentTypeSnapshot ToContentTypeSnapshot(IContentType contentType)
+    {
+        ArgumentNullException.ThrowIfNull(contentType);
+        return MapContentType(
+            contentType.Key,
+            contentType.Alias,
+            contentType.Name,
+            contentType.Icon,
+            contentType.IsElement,
+            contentType.ContentTypeComposition,
+            contentType.PropertyTypes);
+    }
+
+    public static ContentTypeSnapshot ToContentTypeSnapshot(IMediaType mediaType)
+    {
+        ArgumentNullException.ThrowIfNull(mediaType);
+        return MapContentType(
+            mediaType.Key,
+            mediaType.Alias,
+            mediaType.Name,
+            mediaType.Icon,
+            isElement: false,
+            mediaType.ContentTypeComposition,
+            mediaType.PropertyTypes);
+    }
+
+    private static ContentTypeSnapshot MapContentType(
+        Guid key,
+        string alias,
+        string? name,
+        string? icon,
+        bool isElement,
+        IEnumerable<IContentTypeComposition> compositions,
+        IEnumerable<IPropertyType> propertyTypes)
+    {
+        var compositionAliases = compositions
+            .Select(c => c.Alias)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var properties = propertyTypes
+            .OrderBy(p => p.SortOrder)
+            .Select(p => new ContentTypePropertySnapshot(
+                p.Alias,
+                p.Name ?? string.Empty,
+                p.DataTypeKey.ToString("D"),
+                p.Mandatory,
+                p.SortOrder,
+                p.Variations.ToString()))
+            .ToArray();
+
+        return new ContentTypeSnapshot(
+            key,
+            alias,
+            name ?? string.Empty,
+            icon,
+            isElement,
+            compositionAliases,
+            properties);
     }
 }

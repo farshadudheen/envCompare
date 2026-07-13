@@ -1,4 +1,5 @@
 using EnvCompare.Core.Abstractions;
+using EnvCompare.Core.Configuration;
 using EnvCompare.Core.Models;
 
 namespace EnvCompare.Core.Comparison.Media;
@@ -117,6 +118,15 @@ public sealed class MediaComparer : IComparerModule
                 differences.Add("filename");
             }
 
+            var propertyDifferences = PropertySnapshotComparer.FindDifferences(
+                nodeA.Properties,
+                nodeB.Properties,
+                context.Options);
+            if (propertyDifferences.Count > 0)
+            {
+                differences.Add($"properties ({string.Join(", ", propertyDifferences)})");
+            }
+
             var status = differences.Count == 0 ? DifferenceType.Identical : DifferenceType.Modified;
             items.Add(ComparisonHelpers.CreateItem(
                 Alias,
@@ -143,6 +153,10 @@ public sealed class MediaComparer : IComparerModule
             return null;
         }
 
-        return $"{node.Name} | {node.MediaTypeAlias} | file={node.FileName ?? "(none)"} | parent={node.ParentKey} | sort={node.SortOrder}";
+        return string.Join(
+            Environment.NewLine,
+            $"{node.Name} | {node.MediaTypeAlias} | file={node.FileName ?? "(none)"} | parent={node.ParentKey} | sort={node.SortOrder}",
+            "Properties:",
+            PropertySnapshotComparer.FormatProperties(node.Properties));
     }
 }

@@ -18,6 +18,8 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
     private readonly IContentService _contentService;
     private readonly IMediaService _mediaService;
     private readonly ILanguageService _languageService;
+    private readonly IContentTypeService _contentTypeService;
+    private readonly IMediaTypeService _mediaTypeService;
     private readonly IEnvironmentCache _cache;
     private readonly ILogger<LocalEnvironmentProvider> _logger;
 
@@ -28,12 +30,16 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
         IContentService contentService,
         IMediaService mediaService,
         ILanguageService languageService,
+        IContentTypeService contentTypeService,
+        IMediaTypeService mediaTypeService,
         IEnvironmentCache cache,
         ILogger<LocalEnvironmentProvider> logger)
     {
         _contentService = contentService ?? throw new ArgumentNullException(nameof(contentService));
         _mediaService = mediaService ?? throw new ArgumentNullException(nameof(mediaService));
         _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+        _contentTypeService = contentTypeService ?? throw new ArgumentNullException(nameof(contentTypeService));
+        _mediaTypeService = mediaTypeService ?? throw new ArgumentNullException(nameof(mediaTypeService));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -147,6 +153,53 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
                         l.IsDefault,
                         l.IsMandatory))
                     .ToArray();
+            },
+            absoluteExpiration: TimeSpan.FromMinutes(5),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ContentTypeSnapshot>> GetDocumentTypesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return await _cache.GetOrCreateAsync(
+            "local:document-types",
+            ct =>
+            {
+                ct.ThrowIfCancellationRequested();
+                var types = _contentTypeService
+                    .GetAll()
+                    .Where(t => !t.IsElement)
+                    .OrderBy(t => t.Alias, StringComparer.OrdinalIgnoreCase)
+                    .Select(SnapshotMapper.ToContentTypeSnapshot)
+                    .ToArray();
+
+                return Task.FromResult<IReadOnlyList<ContentTypeSnapshot>>(types);
+            },
+            absoluteExpiration: TimeSpan.FromMinutes(5),
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<ContentTypeSnapshot>> GetMediaTypesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return await _cache.GetOrCreateAsync(
+            "local:media-types",
+            ct =>
+            {
+                ct.ThrowIfCancellationRequested();
+                var types = _mediaTypeService
+                    .GetAll()
+                    .OrderBy(t => t.Alias, StringComparer.OrdinalIgnoreCase)
+                    .Select(t => SnapshotMapper.ToContentTypeSnapshot(t))
+                    .ToArray();
+
+                return Task.FromResult<IReadOnlyList<ContentTypeSnapshot>>(types);
             },
             absoluteExpiration: TimeSpan.FromMinutes(5),
             cancellationToken).ConfigureAwait(false);

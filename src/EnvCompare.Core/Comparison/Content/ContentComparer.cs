@@ -1,11 +1,11 @@
 using EnvCompare.Core.Abstractions;
+using EnvCompare.Core.Configuration;
 using EnvCompare.Core.Models;
 
 namespace EnvCompare.Core.Comparison.Content;
 
 /// <summary>
-/// Compares content trees between two environments (keys, hierarchy, type, sort order).
-/// Property-value diffs are expanded in Step 6.
+/// Compares content trees between two environments (structure and property values).
 /// </summary>
 public sealed class ContentComparer : IComparerModule
 {
@@ -139,6 +139,15 @@ public sealed class ContentComparer : IComparerModule
                 differences.Add("published state");
             }
 
+            var propertyDifferences = PropertySnapshotComparer.FindDifferences(
+                nodeA.Properties,
+                nodeB.Properties,
+                context.Options);
+            if (propertyDifferences.Count > 0)
+            {
+                differences.Add($"properties ({string.Join(", ", propertyDifferences)})");
+            }
+
             var status = differences.Count == 0 ? DifferenceType.Identical : DifferenceType.Modified;
             items.Add(ComparisonHelpers.CreateItem(
                 Alias,
@@ -176,6 +185,10 @@ public sealed class ContentComparer : IComparerModule
             return null;
         }
 
-        return $"{node.Name} | {node.ContentTypeAlias} | parent={node.ParentKey} | sort={node.SortOrder} | level={node.Level} | published={node.Published}";
+        return string.Join(
+            Environment.NewLine,
+            $"{node.Name} | {node.ContentTypeAlias} | parent={node.ParentKey} | sort={node.SortOrder} | level={node.Level} | published={node.Published}",
+            "Properties:",
+            PropertySnapshotComparer.FormatProperties(node.Properties));
     }
 }

@@ -63,4 +63,16 @@ public interface IEnvironmentProvider
     /// </summary>
     Task<IReadOnlyList<LanguageSnapshot>> GetLanguagesAsync(
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets document type definitions in the environment.
+    /// </summary>
+    Task<IReadOnlyList<ContentTypeSnapshot>> GetDocumentTypesAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets media type definitions in the environment.
+    /// </summary>
+    Task<IReadOnlyList<ContentTypeSnapshot>> GetMediaTypesAsync(
+        CancellationToken cancellationToken = default);
 }

@@ -170,6 +170,38 @@ public sealed class RemoteEnvironmentProvider : IEnvironmentProvider
             absoluteExpiration: TimeSpan.FromMinutes(5),
             cancellationToken);
 
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ContentTypeSnapshot>> GetDocumentTypesAsync(
+        CancellationToken cancellationToken = default)
+        => _cache.GetOrCreateAsync(
+            $"{Name}:document-types",
+            async ct =>
+            {
+                var items = await GetRequiredJsonAsync<List<ContentTypeSnapshot>>(
+                        $"{EnvComparePeerApiRoutes.Prefix}/document-types",
+                        ct)
+                    .ConfigureAwait(false);
+                return (IReadOnlyList<ContentTypeSnapshot>)items;
+            },
+            absoluteExpiration: TimeSpan.FromMinutes(5),
+            cancellationToken);
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ContentTypeSnapshot>> GetMediaTypesAsync(
+        CancellationToken cancellationToken = default)
+        => _cache.GetOrCreateAsync(
+            $"{Name}:media-types",
+            async ct =>
+            {
+                var items = await GetRequiredJsonAsync<List<ContentTypeSnapshot>>(
+                        $"{EnvComparePeerApiRoutes.Prefix}/media-types",
+                        ct)
+                    .ConfigureAwait(false);
+                return (IReadOnlyList<ContentTypeSnapshot>)items;
+            },
+            absoluteExpiration: TimeSpan.FromMinutes(5),
+            cancellationToken);
+
     private async Task<T> GetRequiredJsonAsync<T>(string relativePath, CancellationToken cancellationToken)
     {
         using var response = await SendAsync(HttpMethod.Get, relativePath, cancellationToken)

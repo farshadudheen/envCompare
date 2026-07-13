@@ -7,7 +7,7 @@ Umbraco 17 NuGet package for comparing content between Umbraco Cloud environment
 Add the package to your Umbraco 17 site:
 
 ```xml
-<PackageReference Include="EnvCompare" Version="0.17.9" />
+<PackageReference Include="EnvCompare" Version="0.18.0" />
 ```
 
 The package auto-registers via `EnvCompareComposer` (`IUmbracoBuilder`). On first run, the package migration creates the `EnvComparePackageState` table to track installed version for future upgrades.
@@ -49,7 +49,7 @@ Prerequisites: .NET 10 SDK, Node.js 20+ (for the backoffice Client Vite build).
 dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release
 ```
 
-Output: `artifacts/EnvCompare.0.17.9.nupkg`
+Output: `artifacts/EnvCompare.0.18.0.nupkg`
 
 Skip the Client build when iterating on C# only:
 
@@ -142,7 +142,7 @@ If restore fails with **Unable to find package EnvCompare.Core** or **EnvCompare
 2. Copy `artifacts/EnvCompare.0.17.9.nupkg` to nuget.org or your feed.
 3. In your Umbraco site, reference only the main package:
    ```xml
-   <PackageReference Include="EnvCompare" Version="0.17.9" />
+   <PackageReference Include="EnvCompare" Version="0.18.0" />
    ```
    Do **not** add `EnvCompare.Core` or `EnvCompare.Infrastructure` as separate package references.
 4. Clear the NuGet cache if old metadata is still picked up:
@@ -156,7 +156,7 @@ If opening **Settings → EnvCompare** logs you out immediately, the dashboard w
 
 **Fixed in 0.17.3+** — backoffice calls use `/umbraco/management/api/v1/envcompare/...` with bearer auth via `umbHttpClient`.
 
-After upgrading to `EnvCompare` **0.17.9** or later:
+After upgrading to `EnvCompare` **0.18.0** or later:
 
 1. Restart the Umbraco site.
 2. Hard-refresh the backoffice (Ctrl+F5) so cached `/App_Plugins/EnvCompare/` scripts reload.

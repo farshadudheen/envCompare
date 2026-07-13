@@ -115,6 +115,30 @@ public sealed class EnvComparePeerApiController : ControllerBase
         return Ok(languages);
     }
 
+    /// <summary>
+    /// Document type definitions on the local environment.
+    /// </summary>
+    [ProducesResponseType<IReadOnlyList<ContentTypeSnapshot>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ContentTypeSnapshot>>> GetDocumentTypes(
+        CancellationToken cancellationToken)
+    {
+        var local = RequireLocal();
+        var types = await local.GetDocumentTypesAsync(cancellationToken).ConfigureAwait(false);
+        return Ok(types);
+    }
+
+    /// <summary>
+    /// Media type definitions on the local environment.
+    /// </summary>
+    [ProducesResponseType<IReadOnlyList<ContentTypeSnapshot>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<ContentTypeSnapshot>>> GetMediaTypes(
+        CancellationToken cancellationToken)
+    {
+        var local = RequireLocal();
+        var types = await local.GetMediaTypesAsync(cancellationToken).ConfigureAwait(false);
+        return Ok(types);
+    }
+
     private IEnvironmentProvider RequireLocal()
     {
         var local = _registry.GetByName("Local")

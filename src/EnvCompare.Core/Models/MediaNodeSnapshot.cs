@@ -12,6 +12,7 @@ namespace EnvCompare.Core.Models;
 /// <param name="Level">Tree level.</param>
 /// <param name="SortOrder">Sort order among siblings.</param>
 /// <param name="FileName">Primary file name when applicable.</param>
+/// <param name="Properties">Property values on the node.</param>
 public sealed record MediaNodeSnapshot(
     Guid Key,
     int Id,
@@ -21,4 +22,5 @@ public sealed record MediaNodeSnapshot(
     string Path,
     int Level,
     int SortOrder,
-    string? FileName);
+    string? FileName,
+    IReadOnlyList<PropertyValueSnapshot> Properties);

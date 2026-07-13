@@ -1,16 +1,18 @@
 using EnvCompare.Core.Abstractions;
+using EnvCompare.Core.Configuration;
 using EnvCompare.Core.Models;
 
 namespace EnvCompare.Core.Comparison.Settings;
 
 /// <summary>
-/// Compares language/settings snapshots currently exposed by environment providers.
-/// Document types, data types, domains, and templates expand in later increments.
+/// Compares languages, document types, and media types between environments.
 /// </summary>
 public sealed class SettingsComparer : IComparerModule
 {
+    private const string ModuleAlias = "settings";
+
     /// <inheritdoc />
-    public string Alias => "settings";
+    public string Alias => ModuleAlias;
 
     /// <inheritdoc />
     public string DisplayName => "Settings";
@@ -23,8 +25,25 @@ public sealed class SettingsComparer : IComparerModule
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
 
-        context.Progress?.Report(new ComparisonProgress(Alias, 0, null, "Loading languages…"));
+        var items = new List<ComparisonItem>();
 
+        context.Progress?.Report(new ComparisonProgress(Alias, 0, null, "Loading languages…"));
+        items.AddRange(await CompareLanguagesAsync(context, cancellationToken).ConfigureAwait(false));
+
+        context.Progress?.Report(new ComparisonProgress(Alias, items.Count, null, "Loading document types…"));
+        items.AddRange(await CompareDocumentTypesAsync(context, cancellationToken).ConfigureAwait(false));
+
+        context.Progress?.Report(new ComparisonProgress(Alias, items.Count, null, "Loading media types…"));
+        items.AddRange(await CompareMediaTypesAsync(context, cancellationToken).ConfigureAwait(false));
+
+        context.Progress?.Report(new ComparisonProgress(Alias, items.Count, items.Count, "Settings comparison complete."));
+        return ComparisonResult.FromItems(items);
+    }
+
+    private static async Task<IReadOnlyList<ComparisonItem>> CompareLanguagesAsync(
+        ComparisonContext context,
+        CancellationToken cancellationToken)
+    {
         var languagesA = await context.EnvironmentA.GetLanguagesAsync(cancellationToken).ConfigureAwait(false);
         var languagesB = await context.EnvironmentB.GetLanguagesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -42,14 +61,14 @@ public sealed class SettingsComparer : IComparerModule
             if (langA is null && langB is not null)
             {
                 items.Add(ComparisonHelpers.CreateItem(
-                    Alias,
+                    ModuleAlias,
                     code,
                     langB.CultureName,
                     "Language",
                     path: null,
                     DifferenceType.Added,
                     null,
-                    Format(langB),
+                    FormatLanguage(langB),
                     ComparisonHelpers.DescribeStatus(DifferenceType.Added),
                     culture: code));
                 continue;
@@ -58,13 +77,13 @@ public sealed class SettingsComparer : IComparerModule
             if (langA is not null && langB is null)
             {
                 items.Add(ComparisonHelpers.CreateItem(
-                    Alias,
+                    ModuleAlias,
                     code,
                     langA.CultureName,
                     "Language",
                     path: null,
                     DifferenceType.Missing,
-                    Format(langA),
+                    FormatLanguage(langA),
                     null,
                     ComparisonHelpers.DescribeStatus(DifferenceType.Missing),
                     culture: code));
@@ -89,24 +108,113 @@ public sealed class SettingsComparer : IComparerModule
 
             var status = differences.Count == 0 ? DifferenceType.Identical : DifferenceType.Modified;
             items.Add(ComparisonHelpers.CreateItem(
-                Alias,
+                ModuleAlias,
                 code,
                 langA.CultureName,
                 "Language",
                 path: null,
                 status,
-                Format(langA),
-                Format(langB),
+                FormatLanguage(langA),
+                FormatLanguage(langB),
                 status == DifferenceType.Identical
                     ? ComparisonHelpers.DescribeStatus(status)
                     : $"Changed: {string.Join(", ", differences)}",
                 culture: code));
         }
 
-        context.Progress?.Report(new ComparisonProgress(Alias, items.Count, items.Count, "Settings comparison complete."));
-        return ComparisonResult.FromItems(items);
+        return items;
     }
 
-    private static string Format(LanguageSnapshot language)
+    private static async Task<IReadOnlyList<ComparisonItem>> CompareDocumentTypesAsync(
+        ComparisonContext context,
+        CancellationToken cancellationToken)
+    {
+        var typesA = await context.EnvironmentA.GetDocumentTypesAsync(cancellationToken).ConfigureAwait(false);
+        var typesB = await context.EnvironmentB.GetDocumentTypesAsync(cancellationToken).ConfigureAwait(false);
+        return CompareContentTypes(typesA, typesB, "Document Type", context.Options, cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<ComparisonItem>> CompareMediaTypesAsync(
+        ComparisonContext context,
+        CancellationToken cancellationToken)
+    {
+        var typesA = await context.EnvironmentA.GetMediaTypesAsync(cancellationToken).ConfigureAwait(false);
+        var typesB = await context.EnvironmentB.GetMediaTypesAsync(cancellationToken).ConfigureAwait(false);
+        return CompareContentTypes(typesA, typesB, "Media Type", context.Options, cancellationToken);
+    }
+
+    private static IReadOnlyList<ComparisonItem> CompareContentTypes(
+        IReadOnlyList<ContentTypeSnapshot> typesA,
+        IReadOnlyList<ContentTypeSnapshot> typesB,
+        string contentTypeLabel,
+        EnvCompareOptions options,
+        CancellationToken cancellationToken)
+    {
+        var mapA = typesA.ToDictionary(t => t.Alias, StringComparer.OrdinalIgnoreCase);
+        var mapB = typesB.ToDictionary(t => t.Alias, StringComparer.OrdinalIgnoreCase);
+        var aliases = mapA.Keys.Union(mapB.Keys, StringComparer.OrdinalIgnoreCase).ToArray();
+        var items = new List<ComparisonItem>(aliases.Length);
+
+        foreach (var alias in aliases)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            mapA.TryGetValue(alias, out var typeA);
+            mapB.TryGetValue(alias, out var typeB);
+
+            if (ComparisonHelpers.IsIgnoredContentType(alias, options))
+            {
+                continue;
+            }
+
+            if (typeA is null && typeB is not null)
+            {
+                items.Add(ComparisonHelpers.CreateItem(
+                    ModuleAlias,
+                    alias,
+                    typeB.Name,
+                    contentTypeLabel,
+                    path: null,
+                    DifferenceType.Added,
+                    null,
+                    ContentTypeSnapshotComparer.Format(typeB),
+                    ComparisonHelpers.DescribeStatus(DifferenceType.Added)));
+                continue;
+            }
+
+            if (typeA is not null && typeB is null)
+            {
+                items.Add(ComparisonHelpers.CreateItem(
+                    ModuleAlias,
+                    alias,
+                    typeA.Name,
+                    contentTypeLabel,
+                    path: null,
+                    DifferenceType.Missing,
+                    ContentTypeSnapshotComparer.Format(typeA),
+                    null,
+                    ComparisonHelpers.DescribeStatus(DifferenceType.Missing)));
+                continue;
+            }
+
+            var differences = ContentTypeSnapshotComparer.FindDifferences(typeA, typeB);
+            var status = differences.Count == 0 ? DifferenceType.Identical : DifferenceType.Modified;
+            items.Add(ComparisonHelpers.CreateItem(
+                ModuleAlias,
+                alias,
+                typeA!.Name,
+                contentTypeLabel,
+                path: null,
+                status,
+                ContentTypeSnapshotComparer.Format(typeA),
+                ContentTypeSnapshotComparer.Format(typeB),
+                status == DifferenceType.Identical
+                    ? ComparisonHelpers.DescribeStatus(status)
+                    : $"Changed: {string.Join(", ", differences)}"));
+        }
+
+        return items;
+    }
+
+    private static string FormatLanguage(LanguageSnapshot language)
         => $"{language.IsoCode} | {language.CultureName} | default={language.IsDefault} | mandatory={language.IsMandatory}";
 }

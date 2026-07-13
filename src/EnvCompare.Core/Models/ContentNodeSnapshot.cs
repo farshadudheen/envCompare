@@ -13,6 +13,7 @@ namespace EnvCompare.Core.Models;
 /// <param name="SortOrder">Sort order among siblings.</param>
 /// <param name="Published">Whether published in at least one culture.</param>
 /// <param name="Cultures">Available culture codes.</param>
+/// <param name="Properties">Property values on the node.</param>
 public sealed record ContentNodeSnapshot(
     Guid Key,
     int Id,
@@ -23,4 +24,5 @@ public sealed record ContentNodeSnapshot(
     int Level,
     int SortOrder,
     bool Published,
-    IReadOnlyList<string> Cultures);
+    IReadOnlyList<string> Cultures,
+    IReadOnlyList<PropertyValueSnapshot> Properties);
