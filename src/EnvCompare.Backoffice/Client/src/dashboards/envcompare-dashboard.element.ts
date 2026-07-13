@@ -88,9 +88,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   private _contentTypeFilter = "";
 
   @state()
-  private _pathFilter = "";
-
-  @state()
   private _showIgnored = false;
 
   @state()
@@ -111,6 +108,9 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   @state()
   private _diffPanelWidth = 22;
 
+  @state()
+  private _diffFullscreen = false;
+
   #compareAbort: AbortController | null = null;
   #resizeStartX = 0;
   #resizeStartWidth = 22;
@@ -118,7 +118,20 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   override connectedCallback() {
     super.connectedCallback();
     void this.#loadEnvironments();
+    window.addEventListener("keydown", this.#onWindowKeydown);
   }
+
+  override disconnectedCallback() {
+    window.removeEventListener("keydown", this.#onWindowKeydown);
+    super.disconnectedCallback();
+  }
+
+  #onWindowKeydown = (event: KeyboardEvent) => {
+    if (event.key === "Escape" && this._diffFullscreen) {
+      event.preventDefault();
+      this._diffFullscreen = false;
+    }
+  };
 
   async #loadEnvironments() {
     this._isLoadingEnvironments = true;
@@ -186,11 +199,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
     this._listScrollTop = 0;
   }
 
-  #onPathFilter(event: Event) {
-    this._pathFilter = (event.target as HTMLInputElement).value;
-    this._listScrollTop = 0;
-  }
-
   #onShowIgnored(event: Event) {
     this._showIgnored = (event.target as HTMLInputElement).checked;
     this._listScrollTop = 0;
@@ -222,13 +230,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       item.contentType?.toLowerCase() !== this._contentTypeFilter.toLowerCase()
     ) {
       return false;
-    }
-
-    if (this._pathFilter.trim()) {
-      const term = this._pathFilter.trim().toLowerCase();
-      if (!(item.path ?? "").toLowerCase().includes(term)) {
-        return false;
-      }
     }
 
     if (this._search.trim()) {
@@ -351,6 +352,7 @@ export class EnvCompareDashboardElement extends UmbLitElement {
     this._isComparing = true;
     this._progress = 15;
     this._selectedItem = null;
+    this._diffFullscreen = false;
     this._listScrollTop = 0;
     this._statusMessage = `Comparing ${this._environmentA} → ${this._environmentB}…`;
 
@@ -366,7 +368,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         environmentB: this._environmentB,
         culture: this._cultureFilter || undefined,
         contentType: this._contentTypeFilter || undefined,
-        pathContains: this._pathFilter || undefined,
         status: this._statusFilter || undefined,
         search: this._search || undefined,
       });
@@ -605,16 +606,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           </select>
         </label>
 
-        <label>
-          <span>Path contains</span>
-          <input
-            type="search"
-            placeholder="/home…"
-            .value=${this._pathFilter}
-            @input=${this.#onPathFilter}
-          />
-        </label>
-
         <label class="checkbox-row">
           <input
             type="checkbox"
@@ -629,6 +620,28 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           for large sites.
         </p>
       </aside>
+    `;
+  }
+
+  #openDiffFullscreen() {
+    if (!this._selectedItem) {
+      return;
+    }
+    this._diffFullscreen = true;
+  }
+
+  #closeDiffFullscreen() {
+    this._diffFullscreen = false;
+  }
+
+  #renderDiffPanel(fullscreen = false) {
+    return html`
+      <envcompare-diff-panel
+        .item=${this._selectedItem}
+        .environmentA=${this._environmentA}
+        .environmentB=${this._environmentB}
+        ?fullscreen=${fullscreen}
+      ></envcompare-diff-panel>
     `;
   }
 
@@ -800,14 +813,51 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           ></div>
 
           <aside class="diff-panel" aria-label="Property differences">
-            <h2>Differences</h2>
-            <envcompare-diff-panel
-              .item=${this._selectedItem}
-              .environmentA=${this._environmentA}
-              .environmentB=${this._environmentB}
-            ></envcompare-diff-panel>
+            <div class="diff-panel-header">
+              <h2>Differences</h2>
+              <button
+                type="button"
+                class="icon-btn"
+                title="Open fullscreen"
+                aria-label="Open differences in fullscreen"
+                ?disabled=${!this._selectedItem}
+                @click=${this.#openDiffFullscreen}
+              >
+                ⛶
+              </button>
+            </div>
+            ${this.#renderDiffPanel()}
           </aside>
         </div>
+
+        ${this._diffFullscreen
+          ? html`
+              <div
+                class="diff-fullscreen"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Differences fullscreen"
+              >
+                <header class="diff-fullscreen-header">
+                  <div>
+                    <h2>Differences</h2>
+                    <p class="hint">${this._selectedItem?.name ?? ""}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="close-btn"
+                    aria-label="Close fullscreen"
+                    @click=${this.#closeDiffFullscreen}
+                  >
+                    Close
+                  </button>
+                </header>
+                <div class="diff-fullscreen-body">
+                  ${this.#renderDiffPanel(true)}
+                </div>
+              </div>
+            `
+          : ""}
       </div>
     `;
   }
@@ -1002,9 +1052,77 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       }
 
       .filters h2,
-      .diff-panel h2 {
+      .diff-panel h2,
+      .diff-fullscreen-header h2 {
         margin: 0 0 0.5rem;
         font-size: 1rem;
+      }
+
+      .diff-panel-header,
+      .diff-fullscreen-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+
+      .diff-panel-header h2,
+      .diff-fullscreen-header h2 {
+        margin: 0;
+      }
+
+      .icon-btn,
+      .close-btn {
+        border: 1px solid var(--panel-border);
+        background: var(--panel-bg);
+        color: inherit;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.65rem;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      .icon-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .icon-btn:not(:disabled):hover,
+      .close-btn:hover {
+        border-color: var(--accent);
+        background: rgba(27, 38, 79, 0.05);
+      }
+
+      .diff-fullscreen {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        background: var(--uui-color-surface-alt, #f6f6f8);
+        padding: 1rem 1.25rem 1.25rem;
+        box-sizing: border-box;
+      }
+
+      .diff-fullscreen-header {
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--panel-border);
+        margin-bottom: 0.75rem;
+      }
+
+      .diff-fullscreen-header .hint {
+        margin: 0.15rem 0 0;
+      }
+
+      .diff-fullscreen-body {
+        min-height: 0;
+        overflow: auto;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: var(--uui-border-radius, 8px);
+        padding: 1rem;
       }
 
       .splitter {
@@ -1022,26 +1140,38 @@ export class EnvCompareDashboardElement extends UmbLitElement {
 
       .results {
         display: grid;
+        grid-template-rows: auto 1fr;
         gap: 0.75rem;
         min-width: 0;
+        align-content: start;
       }
 
       .tabs {
         display: flex;
         flex-wrap: wrap;
         gap: 0.4rem;
+        align-items: center;
+        align-self: start;
+        flex-shrink: 0;
       }
 
       .tab {
         border: 1px solid var(--panel-border);
         background: var(--panel-bg);
         border-radius: 999px;
-        padding: 0.4rem 0.85rem;
+        padding: 0.3rem 0.7rem;
         cursor: pointer;
         color: inherit;
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
+        flex: 0 0 auto;
+        width: auto;
+        height: auto;
+        min-height: 0;
+        font-size: 0.8125rem;
+        line-height: 1.25;
+        font-family: inherit;
       }
 
       .tab.is-active {
@@ -1069,6 +1199,7 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         grid-template-rows: auto 1fr;
         gap: 0.65rem;
         min-height: 26rem;
+        align-self: stretch;
       }
 
       .tree-toolbar {
@@ -1076,6 +1207,7 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         flex-wrap: wrap;
         align-items: center;
         gap: 0.5rem 0.75rem;
+        flex-shrink: 0;
       }
 
       .tree-toolbar h2 {
@@ -1103,7 +1235,11 @@ export class EnvCompareDashboardElement extends UmbLitElement {
         color: inherit;
         cursor: pointer;
         font-size: 0.8rem;
-        padding: 0.35rem 0.65rem;
+        padding: 0.3rem 0.6rem;
+        line-height: 1.25;
+        height: auto;
+        min-height: 0;
+        font-family: inherit;
       }
 
       .view-btn.is-active {

@@ -39,7 +39,6 @@ export type CompareRequest = {
   modules?: string[];
   culture?: string;
   contentType?: string;
-  pathContains?: string;
   status?: string;
   search?: string;
 };

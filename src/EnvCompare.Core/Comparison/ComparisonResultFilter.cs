@@ -30,12 +30,6 @@ public static class ComparisonResultFilter
                 string.Equals(i.ContentType, request.ContentType, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (!string.IsNullOrWhiteSpace(request.PathContains))
-        {
-            items = items.Where(i =>
-                i.Path?.Contains(request.PathContains, StringComparison.OrdinalIgnoreCase) == true);
-        }
-
         if (request.Status is { } status)
         {
             items = items.Where(i => i.Status == status);

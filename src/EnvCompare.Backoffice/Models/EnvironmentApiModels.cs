@@ -50,9 +50,6 @@ public sealed class CompareRequestDto
     /// <summary>Optional content type filter.</summary>
     public string? ContentType { get; set; }
 
-    /// <summary>Optional path filter.</summary>
-    public string? PathContains { get; set; }
-
     /// <summary>Optional status filter.</summary>
     public string? Status { get; set; }
 
@@ -77,7 +74,6 @@ public sealed class CompareRequestDto
             Modules?.Where(m => !string.IsNullOrWhiteSpace(m)).ToArray(),
             Culture,
             ContentType,
-            PathContains,
             status,
             Search);
     }

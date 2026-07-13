@@ -25,6 +25,9 @@ export class EnvCompareDiffPanelElement extends UmbLitElement {
   @property({ type: String })
   environmentB = "Environment B";
 
+  @property({ type: Boolean, reflect: true })
+  fullscreen = false;
+
   #renderDiffSide(
     label: string,
     value: string | null | undefined,
@@ -235,6 +238,18 @@ export class EnvCompareDiffPanelElement extends UmbLitElement {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         max-height: 18rem;
         overflow: auto;
+      }
+
+      :host([fullscreen]) .diff-pre {
+        max-height: min(70vh, 48rem);
+      }
+
+      :host([fullscreen]) .diff-columns {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      :host([fullscreen]) .empty {
+        min-height: 24rem;
       }
 
       .diff-same {

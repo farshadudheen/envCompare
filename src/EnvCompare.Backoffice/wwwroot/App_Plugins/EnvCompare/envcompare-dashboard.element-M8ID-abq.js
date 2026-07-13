@@ -1,13 +1,13 @@
-import { css as X, property as B, customElement as q, html as h, state as f } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement as Y } from "@umbraco-cms/backoffice/lit-element";
-import { umbHttpClient as K } from "@umbraco-cms/backoffice/http-client";
-const J = [
+import { css as K, property as M, customElement as Y, html as h, state as f } from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement as J } from "@umbraco-cms/backoffice/lit-element";
+import { umbHttpClient as Q } from "@umbraco-cms/backoffice/http-client";
+const Z = [
   { type: "http", scheme: "bearer" }
 ];
-async function Ae() {
-  const { data: e, error: t, response: r } = await K.get({
+async function Me() {
+  const { data: e, error: t, response: r } = await Q.get({
     url: "/umbraco/management/api/v1/envcompare/environments",
-    security: J
+    security: Z
   });
   if (t || !r.ok)
     throw new Error(
@@ -16,32 +16,32 @@ async function Ae() {
   const i = e;
   return Array.isArray(i) ? i : [];
 }
-async function Ee(e) {
-  const { data: t, error: r, response: i } = await K.post({
+async function Fe(e) {
+  const { data: t, error: r, response: i } = await Q.post({
     url: "/umbraco/management/api/v1/envcompare/compare",
-    security: J,
+    security: Z,
     body: e,
     headers: {
       "Content-Type": "application/json"
     }
   });
   if (r || !i.ok) {
-    const s = typeof r == "string" ? r : `Comparison failed (${i?.status ?? "unknown"}).`;
-    throw new Error(s);
+    const n = typeof r == "string" ? r : `Comparison failed (${i?.status ?? "unknown"}).`;
+    throw new Error(n);
   }
   return t;
 }
-function A(e) {
+function F(e) {
   return typeof e == "number" ? ["Identical", "Added", "Missing", "Modified", "Ignored"][e] ?? String(e) : e;
 }
-function N(e) {
+function j(e) {
   return e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-function Le(e, t) {
-  const r = U(e), i = U(t), s = Q(r, i);
-  return Fe(r, i, s);
+function ze(e, t) {
+  const r = G(e), i = G(t), n = ee(r, i);
+  return Pe(r, i, n);
 }
-function Me(e, t) {
+function Ie(e, t) {
   const r = e ?? "", i = t ?? "";
   if (r === i)
     return {
@@ -58,92 +58,92 @@ function Me(e, t) {
       left: { parts: [{ text: r, type: "removed" }] },
       right: { parts: [] }
     };
-  const s = r.split(`
-`), n = i.split(`
+  const n = r.split(`
+`), o = i.split(`
 `);
-  if (s.length === 1 && n.length === 1)
-    return Le(r, i);
-  const l = Q(s, n), d = [], p = [];
+  if (n.length === 1 && o.length === 1)
+    return ze(r, i);
+  const l = ee(n, o), d = [], p = [];
   let c = 0, g = 0;
   for (const b of l) {
-    for (; c < s.length && s[c] !== b; )
-      d.push({ text: `${s[c]}
+    for (; c < n.length && n[c] !== b; )
+      d.push({ text: `${n[c]}
 `, type: "removed" }), c++;
-    for (; g < n.length && n[g] !== b; )
-      p.push({ text: `${n[g]}
+    for (; g < o.length && o[g] !== b; )
+      p.push({ text: `${o[g]}
 `, type: "added" }), g++;
-    c < s.length && g < n.length && (d.push({ text: `${b}
+    c < n.length && g < o.length && (d.push({ text: `${b}
 `, type: "same" }), p.push({ text: `${b}
 `, type: "same" }), c++, g++);
   }
-  for (; c < s.length; )
-    d.push({ text: `${s[c]}
+  for (; c < n.length; )
+    d.push({ text: `${n[c]}
 `, type: "removed" }), c++;
-  for (; g < n.length; )
-    p.push({ text: `${n[g]}
+  for (; g < o.length; )
+    p.push({ text: `${o[g]}
 `, type: "added" }), g++;
   return {
-    left: { parts: k(d) },
-    right: { parts: k(p) }
+    left: { parts: T(d) },
+    right: { parts: T(p) }
   };
 }
-function U(e) {
+function G(e) {
   const t = [], r = /(\s+|[^\s]+)/g;
   let i;
   for (; (i = r.exec(e)) !== null; )
     t.push(i[0]);
   return t.length > 0 ? t : [e];
 }
-function Q(e, t) {
-  const r = e.length + 1, i = t.length + 1, s = Array.from({ length: r }, () => Array(i).fill(0));
+function ee(e, t) {
+  const r = e.length + 1, i = t.length + 1, n = Array.from({ length: r }, () => Array(i).fill(0));
   for (let p = 1; p < r; p++)
     for (let c = 1; c < i; c++)
-      e[p - 1] === t[c - 1] ? s[p][c] = s[p - 1][c - 1] + 1 : s[p][c] = Math.max(s[p - 1][c], s[p][c - 1]);
-  const n = [];
+      e[p - 1] === t[c - 1] ? n[p][c] = n[p - 1][c - 1] + 1 : n[p][c] = Math.max(n[p - 1][c], n[p][c - 1]);
+  const o = [];
   let l = e.length, d = t.length;
   for (; l > 0 && d > 0; )
-    e[l - 1] === t[d - 1] ? (n.unshift(e[l - 1]), l--, d--) : s[l - 1][d] >= s[l][d - 1] ? l-- : d--;
-  return n;
+    e[l - 1] === t[d - 1] ? (o.unshift(e[l - 1]), l--, d--) : n[l - 1][d] >= n[l][d - 1] ? l-- : d--;
+  return o;
 }
-function Fe(e, t, r) {
-  const i = [], s = [];
-  let n = 0, l = 0;
+function Pe(e, t, r) {
+  const i = [], n = [];
+  let o = 0, l = 0;
   for (const d of r) {
-    for (; n < e.length && e[n] !== d; )
-      i.push({ text: e[n], type: "removed" }), n++;
+    for (; o < e.length && e[o] !== d; )
+      i.push({ text: e[o], type: "removed" }), o++;
     for (; l < t.length && t[l] !== d; )
-      s.push({ text: t[l], type: "added" }), l++;
-    n < e.length && l < t.length && (i.push({ text: d, type: "same" }), s.push({ text: d, type: "same" }), n++, l++);
+      n.push({ text: t[l], type: "added" }), l++;
+    o < e.length && l < t.length && (i.push({ text: d, type: "same" }), n.push({ text: d, type: "same" }), o++, l++);
   }
-  for (; n < e.length; )
-    i.push({ text: e[n], type: "removed" }), n++;
+  for (; o < e.length; )
+    i.push({ text: e[o], type: "removed" }), o++;
   for (; l < t.length; )
-    s.push({ text: t[l], type: "added" }), l++;
+    n.push({ text: t[l], type: "added" }), l++;
   return {
-    left: { parts: k(i) },
-    right: { parts: k(s) }
+    left: { parts: T(i) },
+    right: { parts: T(n) }
   };
 }
-function k(e) {
+function T(e) {
   if (e.length === 0)
     return e;
   const t = [{ ...e[0] }];
   for (let r = 1; r < e.length; r++) {
-    const i = e[r], s = t[t.length - 1];
-    s.type === i.type ? s.text += i.text : t.push({ ...i });
+    const i = e[r], n = t[t.length - 1];
+    n.type === i.type ? n.text += i.text : t.push({ ...i });
   }
   return t;
 }
-var Pe = Object.defineProperty, ze = Object.getOwnPropertyDescriptor, Z = (e) => {
+var Be = Object.defineProperty, De = Object.getOwnPropertyDescriptor, te = (e) => {
   throw TypeError(e);
-}, E = (e, t, r, i) => {
-  for (var s = i > 1 ? void 0 : i ? ze(t, r) : t, n = e.length - 1, l; n >= 0; n--)
-    (l = e[n]) && (s = (i ? l(t, r, s) : l(s)) || s);
-  return i && s && Pe(t, r, s), s;
-}, Ie = (e, t, r) => t.has(e) || Z("Cannot " + r), Be = (e, t, r) => t.has(e) ? Z("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), j = (e, t, r) => (Ie(e, t, "access private method"), r), x, F;
-let y = class extends Y {
+}, k = (e, t, r, i) => {
+  for (var n = i > 1 ? void 0 : i ? De(t, r) : t, o = e.length - 1, l; o >= 0; o--)
+    (l = e[o]) && (n = (i ? l(t, r, n) : l(n)) || n);
+  return i && n && Be(t, r, n), n;
+}, Oe = (e, t, r) => t.has(e) || te("Cannot " + r), Re = (e, t, r) => t.has(e) ? te("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), X = (e, t, r) => (Oe(e, t, "access private method"), r), C, P;
+let _ = class extends J {
   constructor() {
-    super(...arguments), Be(this, x), this.item = null, this.environmentA = "Environment A", this.environmentB = "Environment B";
+    super(...arguments), Re(this, C), this.item = null, this.environmentA = "Environment A", this.environmentB = "Environment B", this.fullscreen = !1;
   }
   render() {
     if (!this.item)
@@ -153,7 +153,7 @@ let y = class extends Y {
           <p class="hint">Changed text is highlighted like a Git diff.</p>
         </div>
       `;
-    const e = this.item, t = A(e.status);
+    const e = this.item, t = F(e.status);
     return h`
       <div class="diff-details">
         <header class="diff-header">
@@ -184,19 +184,19 @@ let y = class extends Y {
         </dl>
 
         <div class="diff-columns">
-          ${j(this, x, F).call(this, "Environment A", e.environmentAValue, "left", e.environmentBValue)}
-          ${j(this, x, F).call(this, "Environment B", e.environmentBValue, "right", e.environmentAValue)}
+          ${X(this, C, P).call(this, "Environment A", e.environmentAValue, "left", e.environmentBValue)}
+          ${X(this, C, P).call(this, "Environment B", e.environmentBValue, "right", e.environmentAValue)}
         </div>
       </div>
     `;
   }
 };
-x = /* @__PURE__ */ new WeakSet();
-F = function(e, t, r, i) {
-  const s = Me(
+C = /* @__PURE__ */ new WeakSet();
+P = function(e, t, r, i) {
+  const n = Ie(
     r === "left" ? t : i,
     r === "left" ? i : t
-  ), n = r === "left" ? s.left.parts : s.right.parts, l = t ?? "(missing)";
+  ), o = r === "left" ? n.left.parts : n.right.parts, l = t ?? "(missing)";
   return h`
       <section class="diff-side" aria-label=${e}>
         <header class="diff-side-header">
@@ -204,17 +204,17 @@ F = function(e, t, r, i) {
           <span class="env-tag">${r === "left" ? this.environmentA : this.environmentB}</span>
         </header>
         <pre class="diff-pre">
-          ${n.length > 0 ? n.map(
+          ${o.length > 0 ? o.map(
     (d) => h`
-                  <span class="diff-${d.type}">${N(d.text)}</span>
+                  <span class="diff-${d.type}">${j(d.text)}</span>
                 `
-  ) : h`<span class="diff-empty">${N(l)}</span>`}
+  ) : h`<span class="diff-empty">${j(l)}</span>`}
         </pre>
       </section>
     `;
 };
-y.styles = [
-  X`
+_.styles = [
+  K`
       :host {
         display: block;
         color: var(--umb-color-text);
@@ -333,6 +333,18 @@ y.styles = [
         overflow: auto;
       }
 
+      :host([fullscreen]) .diff-pre {
+        max-height: min(70vh, 48rem);
+      }
+
+      :host([fullscreen]) .diff-columns {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      :host([fullscreen]) .empty {
+        min-height: 24rem;
+      }
+
       .diff-same {
         color: inherit;
       }
@@ -394,63 +406,66 @@ y.styles = [
       }
     `
 ];
-E([
-  B({ attribute: !1 })
-], y.prototype, "item", 2);
-E([
-  B({ type: String })
-], y.prototype, "environmentA", 2);
-E([
-  B({ type: String })
-], y.prototype, "environmentB", 2);
-y = E([
-  q("envcompare-diff-panel")
-], y);
-const Re = {
+k([
+  M({ attribute: !1 })
+], _.prototype, "item", 2);
+k([
+  M({ type: String })
+], _.prototype, "environmentA", 2);
+k([
+  M({ type: String })
+], _.prototype, "environmentB", 2);
+k([
+  M({ type: Boolean, reflect: !0 })
+], _.prototype, "fullscreen", 2);
+_ = k([
+  Y("envcompare-diff-panel")
+], _);
+const We = {
   Missing: 4,
   Modified: 3,
   Added: 2,
   Identical: 1,
   Ignored: 0
 };
-function ee(e) {
-  const t = /* @__PURE__ */ new Map(), r = [], i = [...e].sort((s, n) => {
-    const l = s.path ?? s.id, d = n.path ?? n.id;
+function re(e) {
+  const t = /* @__PURE__ */ new Map(), r = [], i = [...e].sort((n, o) => {
+    const l = n.path ?? n.id, d = o.path ?? o.id;
     return l.localeCompare(d);
   });
-  for (const s of i) {
-    const l = (s.path?.trim() || s.id).split(",").filter((c) => c.length > 0), d = Math.max(l.length, 1);
+  for (const n of i) {
+    const l = (n.path?.trim() || n.id).split(",").filter((c) => c.length > 0), d = Math.max(l.length, 1);
     let p = "";
     for (let c = 0; c < d; c++) {
-      const g = l[c] ?? s.id, b = p;
+      const g = l[c] ?? n.id, b = p;
       if (p = p ? `${p},${g}` : g, t.has(p)) {
         if (c === d - 1) {
           const v = t.get(p);
-          v.item = s, v.label = s.name, v.id = s.id, v.statusRank = Math.max(v.statusRank, G(s));
+          v.item = n, v.label = n.name, v.id = n.id, v.statusRank = Math.max(v.statusRank, q(n));
         }
       } else {
-        const v = c === d - 1, M = {
-          id: v ? s.id : p,
-          label: v ? s.name : `… ${g}`,
+        const v = c === d - 1, I = {
+          id: v ? n.id : p,
+          label: v ? n.name : `… ${g}`,
           path: p,
           depth: c,
-          item: v ? s : null,
+          item: v ? n : null,
           children: [],
-          statusRank: v ? G(s) : 0
+          statusRank: v ? q(n) : 0
         };
-        t.set(p, M), b ? t.get(b)?.children.push(M) : r.push(M);
+        t.set(p, I), b ? t.get(b)?.children.push(I) : r.push(I);
       }
     }
   }
-  return re(r), r;
+  return ne(r), r;
 }
-function te(e, t, r = 0) {
+function ie(e, t, r = 0) {
   const i = [];
-  for (const s of e)
-    i.push({ node: s, depth: r }), s.children.length > 0 && t.has(s.path) && i.push(...te(s.children, t, r + 1));
+  for (const n of e)
+    i.push({ node: n, depth: r }), n.children.length > 0 && t.has(n.path) && i.push(...ie(n.children, t, r + 1));
   return i;
 }
-function De(e) {
+function Ve(e) {
   const t = /* @__PURE__ */ new Set(), r = /* @__PURE__ */ new Set();
   for (const i of e)
     i.culture && t.add(i.culture), i.contentType && r.add(i.contentType);
@@ -459,55 +474,60 @@ function De(e) {
     contentTypes: [...r].sort()
   };
 }
-function G(e) {
-  return Re[A(e.status)] ?? 0;
+function q(e) {
+  return We[F(e.status)] ?? 0;
 }
-function re(e) {
+function ne(e) {
   for (const t of e)
-    t.children.length > 0 && (re(t.children), t.statusRank = Math.max(
+    t.children.length > 0 && (ne(t.children), t.statusRank = Math.max(
       t.statusRank,
       ...t.children.map((r) => r.statusRank)
     ));
 }
-function ie(e, t, r, i, s = 4) {
+function se(e, t, r, i, n = 4) {
   if (r <= 0 || i <= 0)
     return { start: 0, end: 0, offsetTop: 0, totalHeight: 0 };
-  const n = r * i, l = Math.max(0, Math.floor(e / i) - s), d = Math.ceil(t / i) + s * 2, p = Math.min(r, l + d);
+  const o = r * i, l = Math.max(0, Math.floor(e / i) - n), d = Math.ceil(t / i) + n * 2, p = Math.min(r, l + d);
   return {
     start: l,
     end: p,
     offsetTop: l * i,
-    totalHeight: n
+    totalHeight: o
   };
 }
-var Oe = Object.defineProperty, We = Object.getOwnPropertyDescriptor, se = (e) => {
+var He = Object.defineProperty, Ne = Object.getOwnPropertyDescriptor, ae = (e) => {
   throw TypeError(e);
 }, m = (e, t, r, i) => {
-  for (var s = i > 1 ? void 0 : i ? We(t, r) : t, n = e.length - 1, l; n >= 0; n--)
-    (l = e[n]) && (s = (i ? l(t, r, s) : l(s)) || s);
-  return i && s && Oe(t, r, s), s;
-}, R = (e, t, r) => t.has(e) || se("Cannot " + r), P = (e, t, r) => (R(e, t, "read from private field"), t.get(e)), $ = (e, t, r) => t.has(e) ? se("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), z = (e, t, r, i) => (R(e, t, "write to private field"), t.set(e, r), r), o = (e, t, r) => (R(e, t, "access private method"), r), C, S, T, a, ne, ae, oe, le, de, ce, pe, ue, he, me, D, L, fe, ge, O, ve, be, _e, W, ye, we, I, _, w, V, $e, xe, ke, Ce, Se;
-const Te = 52, H = {
+  for (var n = i > 1 ? void 0 : i ? Ne(t, r) : t, o = e.length - 1, l; o >= 0; o--)
+    (l = e[o]) && (n = (i ? l(t, r, n) : l(n)) || n);
+  return i && n && He(t, r, n), n;
+}, R = (e, t, r) => t.has(e) || ae("Cannot " + r), x = (e, t, r) => (R(e, t, "read from private field"), t.get(e)), w = (e, t, r) => t.has(e) ? ae("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), B = (e, t, r, i) => (R(e, t, "write to private field"), t.set(e, r), r), a = (e, t, r) => (R(e, t, "access private method"), r), A, E, L, S, s, oe, le, de, ce, pe, ue, he, me, fe, W, z, ge, ve, V, be, _e, ye, H, we, $e, D, y, $, N, xe, ke, Ce, Se, Te, Ae, Ee, O;
+const Le = 52, U = {
   content: "content",
   media: "media",
   settings: "settings",
   dictionary: "dictionary"
-}, Ve = {
+}, Ue = {
   Identical: "✔",
   Added: "＋",
   Missing: "−",
   Modified: "△",
   Ignored: "○"
 };
-let u = class extends Y {
+let u = class extends J {
   constructor() {
-    super(...arguments), $(this, a), this._environments = [], this._environmentA = "Local", this._environmentB = "", this._isComparing = !1, this._isLoadingEnvironments = !0, this._progress = 0, this._statusMessage = "Loading environments…", this._activeTab = "content", this._viewMode = "tree", this._search = "", this._statusFilter = "", this._cultureFilter = "", this._contentTypeFilter = "", this._pathFilter = "", this._showIgnored = !1, this._result = null, this._selectedItem = null, this._expandedPaths = /* @__PURE__ */ new Set(), this._listScrollTop = 0, this._listViewportHeight = 420, this._diffPanelWidth = 22, $(this, C, null), $(this, S, 0), $(this, T, 22);
+    super(...arguments), w(this, s), this._environments = [], this._environmentA = "Local", this._environmentB = "", this._isComparing = !1, this._isLoadingEnvironments = !0, this._progress = 0, this._statusMessage = "Loading environments…", this._activeTab = "content", this._viewMode = "tree", this._search = "", this._statusFilter = "", this._cultureFilter = "", this._contentTypeFilter = "", this._showIgnored = !1, this._result = null, this._selectedItem = null, this._expandedPaths = /* @__PURE__ */ new Set(), this._listScrollTop = 0, this._listViewportHeight = 420, this._diffPanelWidth = 22, this._diffFullscreen = !1, w(this, A, null), w(this, E, 0), w(this, L, 22), w(this, S, (e) => {
+      e.key === "Escape" && this._diffFullscreen && (e.preventDefault(), this._diffFullscreen = !1);
+    });
   }
   connectedCallback() {
-    super.connectedCallback(), o(this, a, ne).call(this);
+    super.connectedCallback(), a(this, s, oe).call(this), window.addEventListener("keydown", x(this, S));
+  }
+  disconnectedCallback() {
+    window.removeEventListener("keydown", x(this, S)), super.disconnectedCallback();
   }
   render() {
-    const e = o(this, a, L).call(this).length;
+    const e = a(this, s, z).call(this).length;
     return h`
       <div class="layout">
         <header class="toolbar">
@@ -522,9 +542,9 @@ let u = class extends Y {
               <select
                 .value=${this._environmentA}
                 ?disabled=${this._isComparing || this._isLoadingEnvironments}
-                @change=${o(this, a, ae)}
+                @change=${a(this, s, le)}
               >
-                ${o(this, a, I).call(this, this._environmentA)}
+                ${a(this, s, D).call(this, this._environmentA)}
               </select>
             </label>
 
@@ -533,7 +553,7 @@ let u = class extends Y {
               label="Swap environments"
               compact
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
-              @click=${o(this, a, me)}
+              @click=${a(this, s, fe)}
             >
               ⇄
             </uui-button>
@@ -543,9 +563,9 @@ let u = class extends Y {
               <select
                 .value=${this._environmentB}
                 ?disabled=${this._isComparing || this._isLoadingEnvironments}
-                @change=${o(this, a, oe)}
+                @change=${a(this, s, de)}
               >
-                ${o(this, a, I).call(this, this._environmentB)}
+                ${a(this, s, D).call(this, this._environmentB)}
               </select>
             </label>
 
@@ -554,7 +574,7 @@ let u = class extends Y {
               color="positive"
               label="Compare"
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
-              @click=${o(this, a, we)}
+              @click=${a(this, s, $e)}
             >
               ${this._isComparing ? "Comparing…" : "Compare"}
             </uui-button>
@@ -572,25 +592,25 @@ let u = class extends Y {
         </header>
 
         <section class="summary" aria-label="Comparison summary">
-          ${o(this, a, _).call(this, "Total Compared", this._result ? String(this._result.totalCompared) : "—", "neutral")}
-          ${o(this, a, _).call(this, "Modified", this._result ? String(this._result.modifiedCount) : "—", "modified")}
-          ${o(this, a, _).call(this, "Missing", this._result ? String(this._result.missingCount) : "—", "missing")}
-          ${o(this, a, _).call(this, "Added", this._result ? String(this._result.addedCount) : "—", "added")}
-          ${o(this, a, _).call(this, "Identical", this._result ? String(this._result.identicalCount) : "—", "identical")}
+          ${a(this, s, y).call(this, "Total Compared", this._result ? String(this._result.totalCompared) : "—", "neutral")}
+          ${a(this, s, y).call(this, "Modified", this._result ? String(this._result.modifiedCount) : "—", "modified")}
+          ${a(this, s, y).call(this, "Missing", this._result ? String(this._result.missingCount) : "—", "missing")}
+          ${a(this, s, y).call(this, "Added", this._result ? String(this._result.addedCount) : "—", "added")}
+          ${a(this, s, y).call(this, "Identical", this._result ? String(this._result.identicalCount) : "—", "identical")}
         </section>
 
         <div
           class="workspace"
           style="--diff-width:${this._diffPanelWidth}rem"
         >
-          ${o(this, a, Se).call(this)}
+          ${a(this, s, Te).call(this)}
 
           <main class="results">
             <nav class="tabs" aria-label="Result categories">
-              ${o(this, a, w).call(this, "content", "Content")}
-              ${o(this, a, w).call(this, "media", "Media")}
-              ${o(this, a, w).call(this, "settings", "Settings")}
-              ${o(this, a, w).call(this, "dictionary", "Dictionary")}
+              ${a(this, s, $).call(this, "content", "Content")}
+              ${a(this, s, $).call(this, "media", "Media")}
+              ${a(this, s, $).call(this, "settings", "Settings")}
+              ${a(this, s, $).call(this, "dictionary", "Dictionary")}
             </nav>
 
             <div class="tree-panel ${this._isComparing ? "is-loading" : ""}">
@@ -618,10 +638,10 @@ let u = class extends Y {
                   </button>
                 </div>
                 ${this._viewMode === "tree" ? h`
-                      <button type="button" class="link-btn" @click=${o(this, a, O)}>
+                      <button type="button" class="link-btn" @click=${a(this, s, V)}>
                         Expand all
                       </button>
-                      <button type="button" class="link-btn" @click=${o(this, a, ve)}>
+                      <button type="button" class="link-btn" @click=${a(this, s, be)}>
                         Collapse all
                       </button>
                     ` : ""}
@@ -634,7 +654,7 @@ let u = class extends Y {
                     </div>
                   ` : ""}
 
-              ${o(this, a, Ce).call(this)}
+              ${a(this, s, Se).call(this)}
             </div>
           </main>
 
@@ -643,30 +663,66 @@ let u = class extends Y {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize diff panel"
-            @pointerdown=${o(this, a, ye)}
+            @pointerdown=${a(this, s, we)}
           ></div>
 
           <aside class="diff-panel" aria-label="Property differences">
-            <h2>Differences</h2>
-            <envcompare-diff-panel
-              .item=${this._selectedItem}
-              .environmentA=${this._environmentA}
-              .environmentB=${this._environmentB}
-            ></envcompare-diff-panel>
+            <div class="diff-panel-header">
+              <h2>Differences</h2>
+              <button
+                type="button"
+                class="icon-btn"
+                title="Open fullscreen"
+                aria-label="Open differences in fullscreen"
+                ?disabled=${!this._selectedItem}
+                @click=${a(this, s, Ae)}
+              >
+                ⛶
+              </button>
+            </div>
+            ${a(this, s, O).call(this)}
           </aside>
         </div>
+
+        ${this._diffFullscreen ? h`
+              <div
+                class="diff-fullscreen"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Differences fullscreen"
+              >
+                <header class="diff-fullscreen-header">
+                  <div>
+                    <h2>Differences</h2>
+                    <p class="hint">${this._selectedItem?.name ?? ""}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="close-btn"
+                    aria-label="Close fullscreen"
+                    @click=${a(this, s, Ee)}
+                  >
+                    Close
+                  </button>
+                </header>
+                <div class="diff-fullscreen-body">
+                  ${a(this, s, O).call(this, !0)}
+                </div>
+              </div>
+            ` : ""}
       </div>
     `;
   }
 };
-C = /* @__PURE__ */ new WeakMap();
+A = /* @__PURE__ */ new WeakMap();
+E = /* @__PURE__ */ new WeakMap();
+L = /* @__PURE__ */ new WeakMap();
 S = /* @__PURE__ */ new WeakMap();
-T = /* @__PURE__ */ new WeakMap();
-a = /* @__PURE__ */ new WeakSet();
-ne = async function() {
+s = /* @__PURE__ */ new WeakSet();
+oe = async function() {
   this._isLoadingEnvironments = !0;
   try {
-    const e = await Ae();
+    const e = await Me();
     this._environments = e;
     const t = e.find((i) => i.isLocal)?.name ?? "Local", r = e.find((i) => !i.isLocal)?.name ?? e.find((i) => i.name !== t)?.name ?? "";
     this._environmentA = t, this._environmentB = r, this._statusMessage = e.length > 1 ? "Select two environments, then compare." : "Only Local is available. Configure remote ApiUrl values in appsettings.";
@@ -683,43 +739,35 @@ ne = async function() {
     this._isLoadingEnvironments = !1;
   }
 };
-ae = function(e) {
+le = function(e) {
   this._environmentA = e.target.value;
 };
-oe = function(e) {
+de = function(e) {
   this._environmentB = e.target.value;
 };
-le = function(e) {
+ce = function(e) {
   this._search = e.target.value, this._listScrollTop = 0;
 };
-de = function(e) {
+pe = function(e) {
   this._statusFilter = e.target.value, this._listScrollTop = 0;
 };
-ce = function(e) {
+ue = function(e) {
   this._cultureFilter = e.target.value, this._listScrollTop = 0;
 };
-pe = function(e) {
+he = function(e) {
   this._contentTypeFilter = e.target.value, this._listScrollTop = 0;
 };
-ue = function(e) {
-  this._pathFilter = e.target.value, this._listScrollTop = 0;
-};
-he = function(e) {
+me = function(e) {
   this._showIgnored = e.target.checked, this._listScrollTop = 0;
 };
-me = function() {
+fe = function() {
   const e = this._environmentA;
   this._environmentA = this._environmentB, this._environmentB = e;
 };
-D = function(e) {
-  const t = A(e.status);
+W = function(e) {
+  const t = F(e.status);
   if (!this._showIgnored && t === "Ignored" || this._statusFilter && t.toLowerCase() !== this._statusFilter.toLowerCase() || this._cultureFilter && e.culture?.toLowerCase() !== this._cultureFilter.toLowerCase() || this._contentTypeFilter && e.contentType?.toLowerCase() !== this._contentTypeFilter.toLowerCase())
     return !1;
-  if (this._pathFilter.trim()) {
-    const r = this._pathFilter.trim().toLowerCase();
-    if (!(e.path ?? "").toLowerCase().includes(r))
-      return !1;
-  }
   if (this._search.trim()) {
     const r = this._search.trim().toLowerCase();
     if (![
@@ -733,51 +781,51 @@ D = function(e) {
   }
   return !0;
 };
-L = function() {
-  return (this._result?.items ?? []).filter((t) => (t.moduleAlias ?? "content").toLowerCase() === H[this._activeTab] && o(this, a, D).call(this, t));
+z = function() {
+  return (this._result?.items ?? []).filter((t) => (t.moduleAlias ?? "content").toLowerCase() === U[this._activeTab] && a(this, s, W).call(this, t));
 };
-fe = function(e) {
-  return (this._result?.items ?? []).filter((r) => (r.moduleAlias ?? "content").toLowerCase() === H[e] && o(this, a, D).call(this, r)).length;
+ge = function(e) {
+  return (this._result?.items ?? []).filter((r) => (r.moduleAlias ?? "content").toLowerCase() === U[e] && a(this, s, W).call(this, r)).length;
 };
-ge = function() {
+ve = function() {
   const e = (this._result?.items ?? []).filter(
-    (t) => (t.moduleAlias ?? "content").toLowerCase() === H[this._activeTab]
+    (t) => (t.moduleAlias ?? "content").toLowerCase() === U[this._activeTab]
   );
-  return De(e);
+  return Ve(e);
 };
-O = function() {
-  const e = o(this, a, L).call(this), t = ee(e), r = /* @__PURE__ */ new Set(), i = (s) => {
-    for (const n of s)
-      n.children.length > 0 && (r.add(n.path), i(n.children));
+V = function() {
+  const e = a(this, s, z).call(this), t = re(e), r = /* @__PURE__ */ new Set(), i = (n) => {
+    for (const o of n)
+      o.children.length > 0 && (r.add(o.path), i(o.children));
   };
   i(t), this._expandedPaths = r;
 };
-ve = function() {
+be = function() {
   this._expandedPaths = /* @__PURE__ */ new Set();
 };
-be = function(e, t) {
+_e = function(e, t) {
   t.stopPropagation();
   const r = new Set(this._expandedPaths);
   r.has(e) ? r.delete(e) : r.add(e), this._expandedPaths = r;
 };
-_e = function(e) {
+ye = function(e) {
   this._selectedItem = e;
 };
-W = function(e) {
+H = function(e) {
   const t = e.target;
   this._listScrollTop = t.scrollTop, this._listViewportHeight = t.clientHeight;
 };
-ye = function(e) {
-  e.preventDefault(), z(this, S, e.clientX), z(this, T, this._diffPanelWidth);
+we = function(e) {
+  e.preventDefault(), B(this, E, e.clientX), B(this, L, this._diffPanelWidth);
   const t = (i) => {
-    const s = P(this, S) - i.clientX, n = Math.min(40, Math.max(14, P(this, T) + s / 16));
-    this._diffPanelWidth = n;
+    const n = x(this, E) - i.clientX, o = Math.min(40, Math.max(14, x(this, L) + n / 16));
+    this._diffPanelWidth = o;
   }, r = () => {
     window.removeEventListener("pointermove", t), window.removeEventListener("pointerup", r);
   };
   window.addEventListener("pointermove", t), window.addEventListener("pointerup", r);
 };
-we = async function() {
+$e = async function() {
   if (!this._environmentA || !this._environmentB) {
     this._statusMessage = "Select both Environment A and Environment B.";
     return;
@@ -786,28 +834,27 @@ we = async function() {
     this._statusMessage = "Environment A and B must be different.";
     return;
   }
-  P(this, C)?.abort(), z(this, C, new AbortController()), this._isComparing = !0, this._progress = 15, this._selectedItem = null, this._listScrollTop = 0, this._statusMessage = `Comparing ${this._environmentA} → ${this._environmentB}…`;
+  x(this, A)?.abort(), B(this, A, new AbortController()), this._isComparing = !0, this._progress = 15, this._selectedItem = null, this._diffFullscreen = !1, this._listScrollTop = 0, this._statusMessage = `Comparing ${this._environmentA} → ${this._environmentB}…`;
   const e = window.setInterval(() => {
     this._progress < 85 && (this._progress += 5);
   }, 200);
   try {
-    const t = await Ee({
+    const t = await Fe({
       environmentA: this._environmentA,
       environmentB: this._environmentB,
       culture: this._cultureFilter || void 0,
       contentType: this._contentTypeFilter || void 0,
-      pathContains: this._pathFilter || void 0,
       status: this._statusFilter || void 0,
       search: this._search || void 0
     });
-    this._result = t, this._progress = 100, this._statusMessage = `Compared ${t.totalCompared} item(s).`, o(this, a, O).call(this);
+    this._result = t, this._progress = 100, this._statusMessage = `Compared ${t.totalCompared} item(s).`, a(this, s, V).call(this);
   } catch (t) {
     this._progress = 0, this._statusMessage = t instanceof Error ? t.message : "Comparison failed.";
   } finally {
     window.clearInterval(e), this._isComparing = !1;
   }
 };
-I = function(e) {
+D = function(e) {
   return (this._environments.length > 0 ? this._environments : [
     {
       name: "Local",
@@ -823,7 +870,7 @@ I = function(e) {
       `
   );
 };
-_ = function(e, t, r) {
+y = function(e, t, r) {
   return h`
       <div class="summary-card" data-tone=${r}>
         <span class="summary-label">${e}</span>
@@ -831,8 +878,8 @@ _ = function(e, t, r) {
       </div>
     `;
 };
-w = function(e, t) {
-  const r = this._result ? o(this, a, fe).call(this, e) : null;
+$ = function(e, t) {
+  const r = this._result ? a(this, s, ge).call(this, e) : null;
   return h`
       <button
         type="button"
@@ -845,14 +892,14 @@ w = function(e, t) {
       </button>
     `;
 };
-V = function(e, t = 0) {
-  const r = A(e.status), i = Ve[r] ?? "•";
+N = function(e, t = 0) {
+  const r = F(e.status), i = Ue[r] ?? "•";
   return h`
       <button
         type="button"
         class="result-row status-${r.toLowerCase()} ${this._selectedItem?.id === e.id ? "is-selected" : ""}"
         style=${`--indent:${t}`}
-        @click=${() => o(this, a, _e).call(this, e)}
+        @click=${() => a(this, s, ye).call(this, e)}
       >
         <span class="result-icon" aria-hidden="true">${i}</span>
         <span class="result-status">${r}</span>
@@ -863,14 +910,14 @@ V = function(e, t = 0) {
       </button>
     `;
 };
-$e = function(e, t) {
+xe = function(e, t) {
   const r = this._expandedPaths.has(e.path), i = e.item;
-  return i ? o(this, a, V).call(this, i, t) : h`
+  return i ? a(this, s, N).call(this, i, t) : h`
       <button
         type="button"
         class="tree-folder"
         style=${`--indent:${t}`}
-        @click=${(s) => o(this, a, be).call(this, e.path, s)}
+        @click=${(n) => a(this, s, _e).call(this, e.path, n)}
       >
         <span class="tree-chevron ${r ? "is-open" : ""}" aria-hidden="true">›</span>
         <span class="tree-folder-label">${e.label}</span>
@@ -878,62 +925,62 @@ $e = function(e, t) {
       </button>
     `;
 };
-xe = function(e) {
-  const t = ie(
+ke = function(e) {
+  const t = se(
     this._listScrollTop,
     this._listViewportHeight,
     e.length,
-    Te
+    Le
   ), r = e.slice(t.start, t.end);
   return h`
       <div
         class="virtual-scroll"
-        @scroll=${o(this, a, W)}
+        @scroll=${a(this, s, H)}
         role="list"
       >
         <div class="virtual-spacer" style="height:${t.totalHeight}px">
           <div class="virtual-window" style="transform:translateY(${t.offsetTop}px)">
-            ${r.map((i) => o(this, a, V).call(this, i))}
+            ${r.map((i) => a(this, s, N).call(this, i))}
           </div>
         </div>
       </div>
     `;
 };
-ke = function(e) {
-  const t = ee(e), r = te(t, this._expandedPaths);
+Ce = function(e) {
+  const t = re(e), r = ie(t, this._expandedPaths);
   if (r.length === 0)
     return h`<div class="empty"><p>No items to display.</p></div>`;
-  const i = ie(
+  const i = se(
     this._listScrollTop,
     this._listViewportHeight,
     r.length,
-    Te
-  ), s = r.slice(i.start, i.end);
+    Le
+  ), n = r.slice(i.start, i.end);
   return h`
-      <div class="virtual-scroll" @scroll=${o(this, a, W)} role="tree">
+      <div class="virtual-scroll" @scroll=${a(this, s, H)} role="tree">
         <div class="virtual-spacer" style="height:${i.totalHeight}px">
           <div class="virtual-window" style="transform:translateY(${i.offsetTop}px)">
-            ${s.map(({ node: n, depth: l }) => o(this, a, $e).call(this, n, l))}
+            ${n.map(({ node: o, depth: l }) => a(this, s, xe).call(this, o, l))}
           </div>
         </div>
       </div>
     `;
 };
-Ce = function() {
-  const e = o(this, a, L).call(this);
+Se = function() {
+  const e = a(this, s, z).call(this);
   return this._result ? e.length === 0 ? h`
         <div class="empty">
           <p>No items match the current tab/filters.</p>
         </div>
-      ` : this._viewMode === "tree" ? o(this, a, ke).call(this, e) : o(this, a, xe).call(this, e) : h`
+      ` : this._viewMode === "tree" ? a(this, s, Ce).call(this, e) : a(this, s, ke).call(this, e) : h`
         <div class="empty">
           <p>No comparison results yet.</p>
           <p class="hint">Select environments and click Compare.</p>
         </div>
       `;
 };
-Se = function() {
-  const e = o(this, a, ge).call(this);
+Te = function() {
+  const e = a(this, s, ve).call(this);
   return h`
       <aside class="filters" aria-label="Filters">
         <h2>Filters</h2>
@@ -944,13 +991,13 @@ Se = function() {
             type="search"
             placeholder="Instant search…"
             .value=${this._search}
-            @input=${o(this, a, le)}
+            @input=${a(this, s, ce)}
           />
         </label>
 
         <label>
           <span>Status</span>
-          <select .value=${this._statusFilter} @change=${o(this, a, de)}>
+          <select .value=${this._statusFilter} @change=${a(this, s, pe)}>
             <option value="">All statuses</option>
             <option value="Identical">Identical</option>
             <option value="Added">Added</option>
@@ -962,7 +1009,7 @@ Se = function() {
 
         <label>
           <span>Culture</span>
-          <select .value=${this._cultureFilter} @change=${o(this, a, ce)}>
+          <select .value=${this._cultureFilter} @change=${a(this, s, ue)}>
             <option value="">All cultures</option>
             ${e.cultures.map(
     (t) => h`<option value=${t}>${t}</option>`
@@ -972,7 +1019,7 @@ Se = function() {
 
         <label>
           <span>Content type</span>
-          <select .value=${this._contentTypeFilter} @change=${o(this, a, pe)}>
+          <select .value=${this._contentTypeFilter} @change=${a(this, s, he)}>
             <option value="">All types</option>
             ${e.contentTypes.map(
     (t) => h`<option value=${t}>${t}</option>`
@@ -980,21 +1027,11 @@ Se = function() {
           </select>
         </label>
 
-        <label>
-          <span>Path contains</span>
-          <input
-            type="search"
-            placeholder="/home…"
-            .value=${this._pathFilter}
-            @input=${o(this, a, ue)}
-          />
-        </label>
-
         <label class="checkbox-row">
           <input
             type="checkbox"
             .checked=${this._showIgnored}
-            @change=${o(this, a, he)}
+            @change=${a(this, s, me)}
           />
           <span>Show ignored items</span>
         </label>
@@ -1006,8 +1043,24 @@ Se = function() {
       </aside>
     `;
 };
+Ae = function() {
+  this._selectedItem && (this._diffFullscreen = !0);
+};
+Ee = function() {
+  this._diffFullscreen = !1;
+};
+O = function(e = !1) {
+  return h`
+      <envcompare-diff-panel
+        .item=${this._selectedItem}
+        .environmentA=${this._environmentA}
+        .environmentB=${this._environmentB}
+        ?fullscreen=${e}
+      ></envcompare-diff-panel>
+    `;
+};
 u.styles = [
-  X`
+  K`
       :host {
         display: block;
         color: var(--umb-color-text);
@@ -1196,9 +1249,77 @@ u.styles = [
       }
 
       .filters h2,
-      .diff-panel h2 {
+      .diff-panel h2,
+      .diff-fullscreen-header h2 {
         margin: 0 0 0.5rem;
         font-size: 1rem;
+      }
+
+      .diff-panel-header,
+      .diff-fullscreen-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+      }
+
+      .diff-panel-header h2,
+      .diff-fullscreen-header h2 {
+        margin: 0;
+      }
+
+      .icon-btn,
+      .close-btn {
+        border: 1px solid var(--panel-border);
+        background: var(--panel-bg);
+        color: inherit;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.65rem;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      .icon-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .icon-btn:not(:disabled):hover,
+      .close-btn:hover {
+        border-color: var(--accent);
+        background: rgba(27, 38, 79, 0.05);
+      }
+
+      .diff-fullscreen {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        background: var(--uui-color-surface-alt, #f6f6f8);
+        padding: 1rem 1.25rem 1.25rem;
+        box-sizing: border-box;
+      }
+
+      .diff-fullscreen-header {
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--panel-border);
+        margin-bottom: 0.75rem;
+      }
+
+      .diff-fullscreen-header .hint {
+        margin: 0.15rem 0 0;
+      }
+
+      .diff-fullscreen-body {
+        min-height: 0;
+        overflow: auto;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: var(--uui-border-radius, 8px);
+        padding: 1rem;
       }
 
       .splitter {
@@ -1216,26 +1337,38 @@ u.styles = [
 
       .results {
         display: grid;
+        grid-template-rows: auto 1fr;
         gap: 0.75rem;
         min-width: 0;
+        align-content: start;
       }
 
       .tabs {
         display: flex;
         flex-wrap: wrap;
         gap: 0.4rem;
+        align-items: center;
+        align-self: start;
+        flex-shrink: 0;
       }
 
       .tab {
         border: 1px solid var(--panel-border);
         background: var(--panel-bg);
         border-radius: 999px;
-        padding: 0.4rem 0.85rem;
+        padding: 0.3rem 0.7rem;
         cursor: pointer;
         color: inherit;
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
+        flex: 0 0 auto;
+        width: auto;
+        height: auto;
+        min-height: 0;
+        font-size: 0.8125rem;
+        line-height: 1.25;
+        font-family: inherit;
       }
 
       .tab.is-active {
@@ -1263,6 +1396,7 @@ u.styles = [
         grid-template-rows: auto 1fr;
         gap: 0.65rem;
         min-height: 26rem;
+        align-self: stretch;
       }
 
       .tree-toolbar {
@@ -1270,6 +1404,7 @@ u.styles = [
         flex-wrap: wrap;
         align-items: center;
         gap: 0.5rem 0.75rem;
+        flex-shrink: 0;
       }
 
       .tree-toolbar h2 {
@@ -1297,7 +1432,11 @@ u.styles = [
         color: inherit;
         cursor: pointer;
         font-size: 0.8rem;
-        padding: 0.35rem 0.65rem;
+        padding: 0.3rem 0.6rem;
+        line-height: 1.25;
+        height: auto;
+        min-height: 0;
+        font-family: inherit;
       }
 
       .view-btn.is-active {
@@ -1542,9 +1681,6 @@ m([
 ], u.prototype, "_contentTypeFilter", 2);
 m([
   f()
-], u.prototype, "_pathFilter", 2);
-m([
-  f()
 ], u.prototype, "_showIgnored", 2);
 m([
   f()
@@ -1564,12 +1700,15 @@ m([
 m([
   f()
 ], u.prototype, "_diffPanelWidth", 2);
+m([
+  f()
+], u.prototype, "_diffFullscreen", 2);
 u = m([
-  q("envcompare-dashboard")
+  Y("envcompare-dashboard")
 ], u);
-const je = u;
+const qe = u;
 export {
   u as EnvCompareDashboardElement,
-  je as default
+  qe as default
 };
-//# sourceMappingURL=envcompare-dashboard.element-CppoEOAt.js.map
+//# sourceMappingURL=envcompare-dashboard.element-M8ID-abq.js.map
