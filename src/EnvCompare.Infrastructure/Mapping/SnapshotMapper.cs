@@ -82,6 +82,24 @@ internal static class SnapshotMapper
             mediaType.PropertyTypes);
     }
 
+    public static DictionaryItemSnapshot ToDictionarySnapshot(IDictionaryItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        var translations = item.Translations?
+            .Where(t => !string.IsNullOrWhiteSpace(t.LanguageIsoCode))
+            .OrderBy(t => t.LanguageIsoCode, StringComparer.OrdinalIgnoreCase)
+            .Select(t => new DictionaryTranslationSnapshot(t.LanguageIsoCode, t.Value))
+            .ToArray()
+            ?? [];
+
+        return new DictionaryItemSnapshot(
+            item.Key,
+            item.ItemKey,
+            item.ParentId,
+            translations);
+    }
+
     private static ContentTypeSnapshot MapContentType(
         Guid key,
         string alias,

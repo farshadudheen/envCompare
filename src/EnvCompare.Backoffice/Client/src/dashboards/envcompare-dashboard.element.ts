@@ -88,9 +88,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
   private _contentTypeFilter = "";
 
   @state()
-  private _showIgnored = false;
-
-  @state()
   private _result: ComparisonResult | null = null;
 
   @state()
@@ -199,11 +196,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
     this._listScrollTop = 0;
   }
 
-  #onShowIgnored(event: Event) {
-    this._showIgnored = (event.target as HTMLInputElement).checked;
-    this._listScrollTop = 0;
-  }
-
   #swapEnvironments() {
     const previousA = this._environmentA;
     this._environmentA = this._environmentB;
@@ -212,10 +204,6 @@ export class EnvCompareDashboardElement extends UmbLitElement {
 
   #matchesFilters(item: ComparisonItem): boolean {
     const status = statusLabel(item.status);
-
-    if (!this._showIgnored && status === "Ignored") {
-      return false;
-    }
 
     if (this._statusFilter && status.toLowerCase() !== this._statusFilter.toLowerCase()) {
       return false;
@@ -602,19 +590,11 @@ export class EnvCompareDashboardElement extends UmbLitElement {
           </select>
         </label>
 
-        <label class="checkbox-row">
-          <input
-            type="checkbox"
-            .checked=${this._showIgnored}
-            @change=${this.#onShowIgnored}
-          />
-          <span>Show ignored items</span>
-        </label>
-
         <p class="hint">
-          Filters apply instantly on the result grid. New document types appear
-          under <strong>Settings</strong> with status <strong>Missing</strong>
-          when they exist only in Environment A (e.g. Local).
+          Filters apply instantly on the result grid. Dictionary items appear
+          under <strong>Dictionary</strong>. New document types appear under
+          <strong>Settings</strong> with status <strong>Missing</strong> when
+          they exist only in Environment A (e.g. Local).
         </p>
       </aside>
     `;

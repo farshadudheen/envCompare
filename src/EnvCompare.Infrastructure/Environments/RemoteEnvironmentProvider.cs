@@ -202,6 +202,22 @@ public sealed class RemoteEnvironmentProvider : IEnvironmentProvider
             absoluteExpiration: TimeSpan.FromMinutes(5),
             cancellationToken);
 
+    /// <inheritdoc />
+    public Task<IReadOnlyList<DictionaryItemSnapshot>> GetDictionaryItemsAsync(
+        CancellationToken cancellationToken = default)
+        => _cache.GetOrCreateAsync(
+            $"{Name}:dictionary-items",
+            async ct =>
+            {
+                var items = await GetRequiredJsonAsync<List<DictionaryItemSnapshot>>(
+                        $"{EnvComparePeerApiRoutes.Prefix}/dictionary-items",
+                        ct)
+                    .ConfigureAwait(false);
+                return (IReadOnlyList<DictionaryItemSnapshot>)items;
+            },
+            absoluteExpiration: null,
+            cancellationToken);
+
     private async Task<T> GetRequiredJsonAsync<T>(string relativePath, CancellationToken cancellationToken)
     {
         using var response = await SendAsync(HttpMethod.Get, relativePath, cancellationToken)

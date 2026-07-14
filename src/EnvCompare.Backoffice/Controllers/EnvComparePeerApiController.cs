@@ -139,6 +139,18 @@ public sealed class EnvComparePeerApiController : ControllerBase
         return Ok(types);
     }
 
+    /// <summary>
+    /// Dictionary items configured on the local environment.
+    /// </summary>
+    [ProducesResponseType<IReadOnlyList<DictionaryItemSnapshot>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<DictionaryItemSnapshot>>> GetDictionaryItems(
+        CancellationToken cancellationToken)
+    {
+        var local = RequireLocal();
+        var items = await local.GetDictionaryItemsAsync(cancellationToken).ConfigureAwait(false);
+        return Ok(items);
+    }
+
     private IEnvironmentProvider RequireLocal()
     {
         var local = _registry.GetByName("Local")

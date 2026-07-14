@@ -75,4 +75,10 @@ public interface IEnvironmentProvider
     /// </summary>
     Task<IReadOnlyList<ContentTypeSnapshot>> GetMediaTypesAsync(
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets dictionary items configured in the environment.
+    /// </summary>
+    Task<IReadOnlyList<DictionaryItemSnapshot>> GetDictionaryItemsAsync(
+        CancellationToken cancellationToken = default);
 }

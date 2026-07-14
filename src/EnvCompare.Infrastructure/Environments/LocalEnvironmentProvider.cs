@@ -20,6 +20,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
     private readonly ILanguageService _languageService;
     private readonly IContentTypeService _contentTypeService;
     private readonly IMediaTypeService _mediaTypeService;
+    private readonly IDictionaryItemService _dictionaryItemService;
     private readonly IEnvironmentCache _cache;
     private readonly ILogger<LocalEnvironmentProvider> _logger;
 
@@ -32,6 +33,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
         ILanguageService languageService,
         IContentTypeService contentTypeService,
         IMediaTypeService mediaTypeService,
+        IDictionaryItemService dictionaryItemService,
         IEnvironmentCache cache,
         ILogger<LocalEnvironmentProvider> logger)
     {
@@ -40,6 +42,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
         _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
         _contentTypeService = contentTypeService ?? throw new ArgumentNullException(nameof(contentTypeService));
         _mediaTypeService = mediaTypeService ?? throw new ArgumentNullException(nameof(mediaTypeService));
+        _dictionaryItemService = dictionaryItemService ?? throw new ArgumentNullException(nameof(dictionaryItemService));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -199,6 +202,31 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
                     .ToArray();
 
                 return Task.FromResult<IReadOnlyList<ContentTypeSnapshot>>(types);
+            },
+            absoluteExpiration: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DictionaryItemSnapshot>> GetDictionaryItemsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return await _cache.GetOrCreateAsync(
+            "local:dictionary-items",
+            async ct =>
+            {
+                ct.ThrowIfCancellationRequested();
+                var items = await _dictionaryItemService
+                    .GetDescendantsAsync(parentId: null, filter: null)
+                    .ConfigureAwait(false);
+
+                return (IReadOnlyList<DictionaryItemSnapshot>)items
+                    .Where(i => !string.IsNullOrWhiteSpace(i.ItemKey))
+                    .OrderBy(i => i.ItemKey, StringComparer.OrdinalIgnoreCase)
+                    .Select(SnapshotMapper.ToDictionarySnapshot)
+                    .ToArray();
             },
             absoluteExpiration: null,
             cancellationToken).ConfigureAwait(false);
