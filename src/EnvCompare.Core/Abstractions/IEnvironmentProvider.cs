@@ -77,6 +77,12 @@ public interface IEnvironmentProvider
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets data type definitions in the environment.
+    /// </summary>
+    Task<IReadOnlyList<DataTypeSnapshot>> GetDataTypesAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets dictionary items configured in the environment.
     /// </summary>
     Task<IReadOnlyList<DictionaryItemSnapshot>> GetDictionaryItemsAsync(

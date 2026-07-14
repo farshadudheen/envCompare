@@ -1,3 +1,4 @@
+using System.Text.Json;
 using EnvCompare.Core.Models;
 using Umbraco.Cms.Core.Models;
 using UmbracoConstants = Umbraco.Cms.Core.Constants;
@@ -9,6 +10,11 @@ namespace EnvCompare.Infrastructure.Mapping;
 /// </summary>
 internal static class SnapshotMapper
 {
+    private static readonly JsonSerializerOptions ConfigurationJsonOptions = new()
+    {
+        WriteIndented = true
+    };
+
     public static ContentNodeSnapshot ToContentSnapshot(IContent content, Guid? parentKey)
     {
         ArgumentNullException.ThrowIfNull(content);
@@ -98,6 +104,34 @@ internal static class SnapshotMapper
             item.ItemKey,
             item.ParentId,
             translations);
+    }
+
+    public static DataTypeSnapshot ToDataTypeSnapshot(IDataType dataType)
+    {
+        ArgumentNullException.ThrowIfNull(dataType);
+
+        return new DataTypeSnapshot(
+            dataType.Key,
+            dataType.Name ?? string.Empty,
+            dataType.EditorAlias ?? string.Empty,
+            dataType.EditorUiAlias,
+            dataType.DatabaseType.ToString(),
+            SerializeConfiguration(dataType.ConfigurationData));
+    }
+
+    private static string SerializeConfiguration(IDictionary<string, object>? configuration)
+    {
+        if (configuration is null || configuration.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        // Sort keys so identical configs compare equal across environments.
+        var ordered = configuration
+            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+
+        return JsonSerializer.Serialize(ordered, ConfigurationJsonOptions);
     }
 
     private static ContentTypeSnapshot MapContentType(

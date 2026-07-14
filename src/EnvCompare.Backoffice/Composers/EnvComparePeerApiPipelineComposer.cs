@@ -44,6 +44,7 @@ public sealed class EnvComparePeerApiPipelineComposer : IComposer
         Map(endpoints, controller, "languages", nameof(EnvComparePeerApiController.GetLanguages));
         Map(endpoints, controller, "document-types", nameof(EnvComparePeerApiController.GetDocumentTypes));
         Map(endpoints, controller, "media-types", nameof(EnvComparePeerApiController.GetMediaTypes));
+        Map(endpoints, controller, "data-types", nameof(EnvComparePeerApiController.GetDataTypes));
         Map(endpoints, controller, "dictionary-items", nameof(EnvComparePeerApiController.GetDictionaryItems));
     }
 

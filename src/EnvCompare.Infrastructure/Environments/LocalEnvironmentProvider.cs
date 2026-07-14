@@ -20,6 +20,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
     private readonly ILanguageService _languageService;
     private readonly IContentTypeService _contentTypeService;
     private readonly IMediaTypeService _mediaTypeService;
+    private readonly IDataTypeService _dataTypeService;
     private readonly IDictionaryItemService _dictionaryItemService;
     private readonly IEnvironmentCache _cache;
     private readonly ILogger<LocalEnvironmentProvider> _logger;
@@ -33,6 +34,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
         ILanguageService languageService,
         IContentTypeService contentTypeService,
         IMediaTypeService mediaTypeService,
+        IDataTypeService dataTypeService,
         IDictionaryItemService dictionaryItemService,
         IEnvironmentCache cache,
         ILogger<LocalEnvironmentProvider> logger)
@@ -42,6 +44,7 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
         _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
         _contentTypeService = contentTypeService ?? throw new ArgumentNullException(nameof(contentTypeService));
         _mediaTypeService = mediaTypeService ?? throw new ArgumentNullException(nameof(mediaTypeService));
+        _dataTypeService = dataTypeService ?? throw new ArgumentNullException(nameof(dataTypeService));
         _dictionaryItemService = dictionaryItemService ?? throw new ArgumentNullException(nameof(dictionaryItemService));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -202,6 +205,30 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
                     .ToArray();
 
                 return Task.FromResult<IReadOnlyList<ContentTypeSnapshot>>(types);
+            },
+            absoluteExpiration: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<DataTypeSnapshot>> GetDataTypesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return await _cache.GetOrCreateAsync(
+            "local:data-types",
+            async ct =>
+            {
+                ct.ThrowIfCancellationRequested();
+                // GetAllAsync() with no keys returns every data type.
+                var types = await _dataTypeService.GetAllAsync().ConfigureAwait(false);
+
+                return (IReadOnlyList<DataTypeSnapshot>)types
+                    .Where(t => !string.IsNullOrWhiteSpace(t.Name))
+                    .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(SnapshotMapper.ToDataTypeSnapshot)
+                    .ToArray();
             },
             absoluteExpiration: null,
             cancellationToken).ConfigureAwait(false);

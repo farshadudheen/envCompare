@@ -5,7 +5,7 @@ using EnvCompare.Core.Models;
 namespace EnvCompare.Core.Comparison.Settings;
 
 /// <summary>
-/// Compares languages, document types, and media types between environments.
+/// Compares languages, document types, media types, and data types between environments.
 /// </summary>
 public sealed class SettingsComparer : IComparerModule
 {
@@ -35,6 +35,9 @@ public sealed class SettingsComparer : IComparerModule
 
         context.Progress?.Report(new ComparisonProgress(Alias, items.Count, null, "Loading media types…"));
         items.AddRange(await CompareMediaTypesAsync(context, cancellationToken).ConfigureAwait(false));
+
+        context.Progress?.Report(new ComparisonProgress(Alias, items.Count, null, "Loading data types…"));
+        items.AddRange(await CompareDataTypesAsync(context, cancellationToken).ConfigureAwait(false));
 
         context.Progress?.Report(new ComparisonProgress(Alias, items.Count, items.Count, "Settings comparison complete."));
         return ComparisonResult.FromItems(items);
@@ -154,6 +157,73 @@ public sealed class SettingsComparer : IComparerModule
             context.Options,
             cancellationToken,
             static type => "Media Type");
+    }
+
+    private static async Task<IReadOnlyList<ComparisonItem>> CompareDataTypesAsync(
+        ComparisonContext context,
+        CancellationToken cancellationToken)
+    {
+        var typesA = await context.EnvironmentA.GetDataTypesAsync(cancellationToken).ConfigureAwait(false);
+        var typesB = await context.EnvironmentB.GetDataTypesAsync(cancellationToken).ConfigureAwait(false);
+
+        var mapA = typesA.ToDictionary(t => t.Name, StringComparer.OrdinalIgnoreCase);
+        var mapB = typesB.ToDictionary(t => t.Name, StringComparer.OrdinalIgnoreCase);
+        var names = mapA.Keys.Union(mapB.Keys, StringComparer.OrdinalIgnoreCase).ToArray();
+        var items = new List<ComparisonItem>(names.Length);
+
+        foreach (var name in names)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            mapA.TryGetValue(name, out var typeA);
+            mapB.TryGetValue(name, out var typeB);
+
+            if (typeA is null && typeB is not null)
+            {
+                items.Add(ComparisonHelpers.CreateItem(
+                    ModuleAlias,
+                    name,
+                    typeB.Name,
+                    "Data Type",
+                    path: typeB.EditorAlias,
+                    DifferenceType.Added,
+                    null,
+                    DataTypeSnapshotComparer.Format(typeB),
+                    ComparisonHelpers.DescribeOnlyInEnvironment(context.EnvironmentB.Name)));
+                continue;
+            }
+
+            if (typeA is not null && typeB is null)
+            {
+                items.Add(ComparisonHelpers.CreateItem(
+                    ModuleAlias,
+                    name,
+                    typeA.Name,
+                    "Data Type",
+                    path: typeA.EditorAlias,
+                    DifferenceType.Missing,
+                    DataTypeSnapshotComparer.Format(typeA),
+                    null,
+                    ComparisonHelpers.DescribeOnlyInEnvironment(context.EnvironmentA.Name)));
+                continue;
+            }
+
+            var differences = DataTypeSnapshotComparer.FindDifferences(typeA, typeB);
+            var status = differences.Count == 0 ? DifferenceType.Identical : DifferenceType.Modified;
+            items.Add(ComparisonHelpers.CreateItem(
+                ModuleAlias,
+                name,
+                typeA!.Name,
+                "Data Type",
+                path: typeA.EditorAlias,
+                status,
+                DataTypeSnapshotComparer.Format(typeA),
+                DataTypeSnapshotComparer.Format(typeB),
+                status == DifferenceType.Identical
+                    ? ComparisonHelpers.DescribeStatus(status)
+                    : $"Changed: {string.Join(", ", differences)}"));
+        }
+
+        return items;
     }
 
     private static IReadOnlyList<ComparisonItem> CompareContentTypes(

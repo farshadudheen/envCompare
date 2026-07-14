@@ -140,6 +140,18 @@ public sealed class EnvComparePeerApiController : ControllerBase
     }
 
     /// <summary>
+    /// Data type definitions on the local environment.
+    /// </summary>
+    [ProducesResponseType<IReadOnlyList<DataTypeSnapshot>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<DataTypeSnapshot>>> GetDataTypes(
+        CancellationToken cancellationToken)
+    {
+        var local = RequireLocal();
+        var types = await local.GetDataTypesAsync(cancellationToken).ConfigureAwait(false);
+        return Ok(types);
+    }
+
+    /// <summary>
     /// Dictionary items configured on the local environment.
     /// </summary>
     [ProducesResponseType<IReadOnlyList<DictionaryItemSnapshot>>(StatusCodes.Status200OK)]

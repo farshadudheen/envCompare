@@ -11,7 +11,7 @@ const a = [
     alias: "EnvCompare.Dashboard.Compare",
     name: "EnvCompare Dashboard",
     elementName: "envcompare-dashboard",
-    element: () => import("./envcompare-dashboard.element-CFi9qZSH.js"),
+    element: () => import("./envcompare-dashboard.element-BeCYc6gc.js"),
     weight: 100,
     meta: {
       label: "EnvCompare",

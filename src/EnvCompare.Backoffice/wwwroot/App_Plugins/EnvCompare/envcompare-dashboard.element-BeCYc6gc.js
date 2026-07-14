@@ -1022,9 +1022,10 @@ Se = function() {
 
         <p class="hint">
           Filters apply instantly on the result grid. Dictionary items appear
-          under <strong>Dictionary</strong>. New document types appear under
-          <strong>Settings</strong> with status <strong>Missing</strong> when
-          they exist only in Environment A (e.g. Local).
+          under <strong>Dictionary</strong>. Document types, element types, media
+          types, and data types appear under <strong>Settings</strong>. New items
+          show as <strong>Missing</strong> when they exist only in Environment A
+          (e.g. Local).
         </p>
       </aside>
     `;
@@ -1694,4 +1695,4 @@ export {
   h as EnvCompareDashboardElement,
   Xe as default
 };
-//# sourceMappingURL=envcompare-dashboard.element-CFi9qZSH.js.map
+//# sourceMappingURL=envcompare-dashboard.element-BeCYc6gc.js.map

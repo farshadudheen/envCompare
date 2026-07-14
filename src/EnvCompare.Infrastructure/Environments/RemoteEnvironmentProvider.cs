@@ -203,6 +203,22 @@ public sealed class RemoteEnvironmentProvider : IEnvironmentProvider
             cancellationToken);
 
     /// <inheritdoc />
+    public Task<IReadOnlyList<DataTypeSnapshot>> GetDataTypesAsync(
+        CancellationToken cancellationToken = default)
+        => _cache.GetOrCreateAsync(
+            $"{Name}:data-types",
+            async ct =>
+            {
+                var items = await GetRequiredJsonAsync<List<DataTypeSnapshot>>(
+                        $"{EnvComparePeerApiRoutes.Prefix}/data-types",
+                        ct)
+                    .ConfigureAwait(false);
+                return (IReadOnlyList<DataTypeSnapshot>)items;
+            },
+            absoluteExpiration: null,
+            cancellationToken);
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<DictionaryItemSnapshot>> GetDictionaryItemsAsync(
         CancellationToken cancellationToken = default)
         => _cache.GetOrCreateAsync(
