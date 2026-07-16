@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Copies App_Plugins into the consuming Umbraco site on build so package.manifest is discovered.
+  -->
+  <Target Name="CopyEnvCompareAssets" BeforeTargets="Build">
+    <ItemGroup>
+      <EnvCompareAssets Include="$(MSBuildThisFileDirectory)..\content\App_Plugins\EnvCompare\**\*.*" />
+    </ItemGroup>
+    <Message Text="EnvCompare: copying App_Plugins assets" Importance="high" />
+    <Copy
+      SourceFiles="@(EnvCompareAssets)"
+      DestinationFiles="@(EnvCompareAssets->'$(MSBuildProjectDirectory)\App_Plugins\EnvCompare\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+</Project>

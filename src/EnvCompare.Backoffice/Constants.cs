@@ -22,9 +22,9 @@ public static class Constants
         ?? "0.0.0";
 
     /// <summary>
-    /// OpenAPI / Swagger document name for EnvCompare management APIs.
+    /// Plugin controller area name used in backoffice API routes.
     /// </summary>
-    public const string ApiName = "envcompare";
+    public const string PluginArea = "EnvCompare";
 
     /// <summary>
     /// Package alias prefix for backoffice extensions.

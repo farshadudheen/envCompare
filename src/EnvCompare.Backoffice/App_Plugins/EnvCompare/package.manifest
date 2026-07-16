@@ -1,0 +1,24 @@
+{
+  "name": "EnvCompare",
+  "version": "13.0.2",
+  "allowPackageTelemetry": true,
+  "dashboards": [
+    {
+      "alias": "EnvCompare.Dashboard",
+      "name": "EnvCompare",
+      "view": "/App_Plugins/EnvCompare/dashboard.html",
+      "sections": ["settings"],
+      "weight": 100,
+      "access": [
+        { "grant": "admin" }
+      ]
+    }
+  ],
+  "javascript": [
+    "~/App_Plugins/EnvCompare/envcompare.resource.js",
+    "~/App_Plugins/EnvCompare/dashboard.controller.js"
+  ],
+  "css": [
+    "~/App_Plugins/EnvCompare/envcompare.css"
+  ]
+}

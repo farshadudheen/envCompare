@@ -1,16 +1,21 @@
 using EnvCompare.Backoffice.Models;
 using EnvCompare.Core.Abstractions;
 using EnvCompare.Core.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Umbraco.Cms.Web.BackOffice.Controllers;
+using Umbraco.Cms.Web.Common.Attributes;
+using Umbraco.Cms.Web.Common.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EnvCompare.Backoffice.Controllers;
 
 /// <summary>
-/// Management API for the EnvCompare backoffice dashboard.
+/// Backoffice JSON API for the EnvCompare dashboard (Umbraco 13 AngularJS).
+/// Routes under <c>/umbraco/backoffice/EnvCompare/EnvCompareApi/...</c>.
 /// </summary>
-[ApiExplorerSettings(GroupName = "EnvCompare")]
-public sealed class EnvCompareApiController : EnvCompareManagementApiControllerBase
+[PluginController("EnvCompare")]
+[Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
+public sealed class EnvCompareApiController : UmbracoAuthorizedJsonController
 {
     private readonly IEnvironmentProviderRegistry _registry;
     private readonly IComparisonEngine _comparisonEngine;
@@ -29,10 +34,8 @@ public sealed class EnvCompareApiController : EnvCompareManagementApiControllerB
     /// <summary>
     /// Lists configured environments (local + remotes) with availability.
     /// </summary>
-    [HttpGet("environments")]
-    [ProducesResponseType<IReadOnlyList<EnvironmentInfoDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<EnvironmentInfoDto>>> GetEnvironments(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var providers = _registry.GetAll();
         var results = new List<EnvironmentInfoDto>(providers.Count);
@@ -55,12 +58,9 @@ public sealed class EnvCompareApiController : EnvCompareManagementApiControllerB
     /// <summary>
     /// Runs the comparison engine (read-only) for the selected environments.
     /// </summary>
-    [HttpPost("compare")]
-    [ProducesResponseType<ComparisonResult>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ComparisonResult>> Compare(
         [FromBody] CompareRequestDto request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         if (request is null)
         {

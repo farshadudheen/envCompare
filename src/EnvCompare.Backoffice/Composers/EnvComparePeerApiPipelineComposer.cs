@@ -19,15 +19,16 @@ public sealed class EnvComparePeerApiPipelineComposer : IComposer
     {
         builder.Services.Configure<UmbracoPipelineOptions>(options =>
         {
-            options.AddFilter(new UmbracoPipelineFilter(
-                "EnvCompare.PeerApi",
-                endpoints: app =>
+            options.AddFilter(new UmbracoPipelineFilter("EnvCompare.PeerApi")
+            {
+                Endpoints = app =>
                 {
                     app.UseEndpoints(endpoints =>
                     {
                         MapPeerApiRoutes(endpoints);
                     });
-                }));
+                }
+            });
         });
     }
 

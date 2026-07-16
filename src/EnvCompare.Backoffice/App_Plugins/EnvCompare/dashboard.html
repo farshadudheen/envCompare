@@ -1,0 +1,250 @@
+<div ng-controller="EnvCompare.DashboardController as vm" class="envcompare">
+  <div class="ec-layout">
+
+    <header class="ec-toolbar">
+      <div class="ec-brand">
+        <h1>EnvCompare</h1>
+        <p>Compare content between Umbraco Cloud environments (read-only).</p>
+      </div>
+
+      <div class="ec-controls">
+        <label class="ec-field">
+          <span class="ec-field-label">Environment A</span>
+          <select ng-model="vm.environmentA"
+                  ng-options="e.name as (e.displayName + (e.isAvailable ? '' : ' (unavailable)')) for e in vm.environments"
+                  ng-disabled="vm.isComparing || vm.isLoadingEnvironments"
+                  ng-change="vm.onEnvironmentChanged()">
+          </select>
+        </label>
+
+        <div class="ec-field ec-field--action">
+          <span class="ec-field-label" aria-hidden="true">&nbsp;</span>
+          <button type="button"
+                  class="ec-btn ec-btn--secondary ec-btn--compact"
+                  ng-click="vm.swapEnvironments()"
+                  ng-disabled="vm.isComparing || vm.isLoadingEnvironments || !vm.environmentA || !vm.environmentB"
+                  title="Swap environments"
+                  aria-label="Swap environments">⇄</button>
+        </div>
+
+        <label class="ec-field">
+          <span class="ec-field-label">Environment B</span>
+          <select ng-model="vm.environmentB"
+                  ng-options="e.name as (e.displayName + (e.isAvailable ? '' : ' (unavailable)')) for e in vm.environments"
+                  ng-disabled="vm.isComparing || vm.isLoadingEnvironments"
+                  ng-change="vm.onEnvironmentChanged()">
+          </select>
+        </label>
+
+        <div class="ec-field ec-field--action">
+          <span class="ec-field-label" aria-hidden="true">&nbsp;</span>
+          <button type="button"
+                  class="ec-btn ec-btn--primary"
+                  ng-click="vm.runCompare()"
+                  ng-disabled="vm.isLoadingEnvironments || vm.isComparing || !vm.environmentA || !vm.environmentB || vm.environmentA === vm.environmentB">
+            <span ng-if="!vm.isComparing">Compare</span>
+            <span ng-if="vm.isComparing">Comparing…</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="ec-progress-block">
+        <div class="ec-progress-track" aria-hidden="true">
+          <div class="ec-progress-fill"
+               ng-class="{ 'is-active': vm.isComparing }"
+               ng-style="{ width: (vm.progress || 0) + '%' }"></div>
+        </div>
+        <p class="ec-status" ng-class="{ 'is-error': vm.hasError }">{{ vm.statusMessage }}</p>
+      </div>
+    </header>
+
+    <section class="ec-summary" aria-label="Comparison summary">
+      <div class="ec-summary-card" data-tone="neutral">
+        <span class="ec-summary-label">Total Compared</span>
+        <span class="ec-summary-value">{{ vm.result ? vm.result.totalCompared : '—' }}</span>
+      </div>
+      <div class="ec-summary-card" data-tone="modified">
+        <span class="ec-summary-label">Modified</span>
+        <span class="ec-summary-value">{{ vm.result ? vm.result.modifiedCount : '—' }}</span>
+      </div>
+      <div class="ec-summary-card" data-tone="missing">
+        <span class="ec-summary-label">Missing</span>
+        <span class="ec-summary-value">{{ vm.result ? vm.result.missingCount : '—' }}</span>
+      </div>
+      <div class="ec-summary-card" data-tone="added">
+        <span class="ec-summary-label">Added</span>
+        <span class="ec-summary-value">{{ vm.result ? vm.result.addedCount : '—' }}</span>
+      </div>
+      <div class="ec-summary-card" data-tone="identical">
+        <span class="ec-summary-label">Identical</span>
+        <span class="ec-summary-value">{{ vm.result ? vm.result.identicalCount : '—' }}</span>
+      </div>
+    </section>
+
+    <div class="ec-workspace">
+
+      <aside class="ec-filters" aria-label="Filters">
+        <h2>Filters</h2>
+
+        <label>
+          <span>Search</span>
+          <input type="search" placeholder="Instant search…" ng-model="vm.search" />
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select ng-model="vm.statusFilter">
+            <option value="">All statuses</option>
+            <option value="Identical">Identical</option>
+            <option value="Added">Added</option>
+            <option value="Missing">Missing</option>
+            <option value="Modified">Modified</option>
+            <option value="Ignored">Ignored</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Culture</span>
+          <select ng-model="vm.cultureFilter">
+            <option value="">All cultures</option>
+            <option ng-repeat="c in vm.filterOptions.cultures" value="{{ c }}">{{ c }}</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Content type</span>
+          <select ng-model="vm.contentTypeFilter">
+            <option value="">All types</option>
+            <option ng-repeat="t in vm.filterOptions.contentTypes" value="{{ t }}">{{ t }}</option>
+          </select>
+        </label>
+
+        <p class="ec-hint">
+          Filters apply instantly on the result grid. Dictionary items appear under
+          <strong>Dictionary</strong>. Document types, element types, media types, and data types
+          appear under <strong>Settings</strong>. New items show as <strong>Missing</strong> when
+          they exist only in Environment A (e.g. Local).
+        </p>
+      </aside>
+
+      <main class="ec-results">
+        <nav class="ec-tabs" aria-label="Result categories">
+          <button type="button" class="ec-tab" ng-class="{ 'is-active': vm.activeTab === 'content' }" ng-click="vm.setTab('content')">
+            Content <span class="ec-tab-count" ng-if="vm.result">{{ vm.tabCount('content') }}</span>
+          </button>
+          <button type="button" class="ec-tab" ng-class="{ 'is-active': vm.activeTab === 'media' }" ng-click="vm.setTab('media')">
+            Media <span class="ec-tab-count" ng-if="vm.result">{{ vm.tabCount('media') }}</span>
+          </button>
+          <button type="button" class="ec-tab" ng-class="{ 'is-active': vm.activeTab === 'settings' }" ng-click="vm.setTab('settings')">
+            Settings <span class="ec-tab-count" ng-if="vm.result">{{ vm.tabCount('settings') }}</span>
+          </button>
+          <button type="button" class="ec-tab" ng-class="{ 'is-active': vm.activeTab === 'dictionary' }" ng-click="vm.setTab('dictionary')">
+            Dictionary <span class="ec-tab-count" ng-if="vm.result">{{ vm.tabCount('dictionary') }}</span>
+          </button>
+        </nav>
+
+        <div class="ec-tree-panel" ng-class="{ 'is-loading': vm.isComparing }">
+          <div class="ec-tree-toolbar">
+            <h2>{{ vm.activeTab }}</h2>
+            <span class="ec-result-count">{{ vm.visibleItems().length }} visible</span>
+
+            <div class="ec-view-toggle" role="group" aria-label="View mode">
+              <button type="button" ng-class="{ 'is-active': vm.viewMode === 'tree' }" ng-click="vm.viewMode = 'tree'">Tree</button>
+              <button type="button" ng-class="{ 'is-active': vm.viewMode === 'list' }" ng-click="vm.viewMode = 'list'">List</button>
+            </div>
+
+            <button type="button" class="ec-link-btn" ng-if="vm.viewMode === 'tree'" ng-click="vm.expandAll()">Expand all</button>
+            <button type="button" class="ec-link-btn" ng-if="vm.viewMode === 'tree'" ng-click="vm.collapseAll()">Collapse all</button>
+          </div>
+
+          <div class="ec-loading-overlay" ng-if="vm.isComparing" aria-live="polite">
+            <div class="ec-spinner" aria-hidden="true"></div>
+            <p>Running comparison…</p>
+          </div>
+
+          <div class="ec-empty" ng-if="!vm.result && !vm.isComparing">
+            <p>No comparison results yet.</p>
+            <p class="ec-hint">Select environments and click Compare.</p>
+          </div>
+
+          <div class="ec-empty" ng-if="vm.result && !vm.visibleItems().length && !vm.isComparing">
+            <p>No items to display.</p>
+            <p class="ec-hint">Try clearing filters or switch tabs.</p>
+          </div>
+
+          <!-- List view -->
+          <div class="ec-scroll" ng-if="vm.result && vm.viewMode === 'list' && vm.visibleItems().length">
+            <button type="button"
+                    class="ec-result-row"
+                    ng-repeat="item in vm.visibleItems() track by item.id"
+                    ng-class="['status-' + vm.statusLabel(item.status).toLowerCase(), { 'is-selected': vm.selectedItem === item }]"
+                    ng-click="vm.selectItem(item)">
+              <span class="ec-result-icon" aria-hidden="true">{{ vm.statusIcon(item.status) }}</span>
+              <span class="ec-result-status">{{ vm.statusLabel(item.status) }}</span>
+              <span class="ec-result-name">{{ item.name }}</span>
+              <span class="ec-result-meta">{{ item.contentType || '—' }} · {{ item.path || item.id }}</span>
+            </button>
+          </div>
+
+          <!-- Tree view -->
+          <div class="ec-scroll" ng-if="vm.result && vm.viewMode === 'tree' && vm.visibleTreeRows().length">
+            <div ng-repeat="row in vm.visibleTreeRows() track by row.node.path">
+              <button type="button"
+                      class="ec-result-row"
+                      ng-if="row.node.item"
+                      ng-class="['status-' + vm.statusLabel(row.node.item.status).toLowerCase(), { 'is-selected': vm.selectedItem && vm.selectedItem.id === row.node.item.id }]"
+                      ng-style="{ '--indent': row.depth }"
+                      ng-click="vm.selectItem(row.node.item)">
+                <span class="ec-result-icon" aria-hidden="true">{{ vm.statusIcon(row.node.item.status) }}</span>
+                <span class="ec-result-status">{{ vm.statusLabel(row.node.item.status) }}</span>
+                <span class="ec-result-name">{{ row.node.item.name }}</span>
+                <span class="ec-result-meta">{{ row.node.item.contentType || '—' }} · {{ row.node.item.path || row.node.item.id }}</span>
+              </button>
+
+              <button type="button"
+                      class="ec-tree-folder"
+                      ng-if="!row.node.item"
+                      ng-style="{ '--indent': row.depth }"
+                      ng-click="vm.toggleExpand(row.node.path)">
+                <span class="ec-tree-chevron" ng-class="{ 'is-open': vm.isExpanded(row.node.path) }" aria-hidden="true">›</span>
+                <span class="ec-tree-folder-label">{{ row.node.label }}</span>
+                <span class="ec-tree-folder-meta">{{ row.node.children.length }} children</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="ec-diff-panel" aria-label="Property differences">
+        <div class="ec-diff-panel-header">
+          <h2>Differences</h2>
+        </div>
+
+        <div class="ec-diff-empty" ng-if="!vm.selectedItem">
+          <p>Select a result row to inspect differences. Changed text is highlighted like a Git diff.</p>
+        </div>
+
+        <div class="ec-diff-body" ng-if="vm.selectedItem">
+          <div class="ec-diff-item-header">
+            <strong>{{ vm.selectedItem.name }}</strong>
+            <span class="ec-pill status-{{ vm.statusLabel(vm.selectedItem.status).toLowerCase() }}">
+              {{ vm.statusLabel(vm.selectedItem.status) }}
+            </span>
+          </div>
+          <p class="ec-hint" ng-if="vm.selectedItem.differenceSummary">{{ vm.selectedItem.differenceSummary }}</p>
+          <div class="ec-diff-panels">
+            <div class="ec-diff-side">
+              <h3>{{ vm.environmentA }}</h3>
+              <pre class="ec-diff-pre" ng-bind-html="vm.diffHtml.left"></pre>
+            </div>
+            <div class="ec-diff-side">
+              <h3>{{ vm.environmentB }}</h3>
+              <pre class="ec-diff-pre" ng-bind-html="vm.diffHtml.right"></pre>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>

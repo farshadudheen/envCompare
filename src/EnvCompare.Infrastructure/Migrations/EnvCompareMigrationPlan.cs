@@ -16,7 +16,7 @@ public sealed class EnvCompareMigrationPlan : PackageMigrationPlan
     /// <summary>
     /// Version recorded on first install.
     /// </summary>
-    public const string InitialVersion = "0.1.2";
+    public const string InitialVersion = "13.0.0";
 
     /// <summary>
     /// Creates the migration plan.

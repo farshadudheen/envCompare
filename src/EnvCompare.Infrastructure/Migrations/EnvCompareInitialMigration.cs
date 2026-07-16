@@ -5,7 +5,7 @@ namespace EnvCompare.Infrastructure.Migrations;
 /// <summary>
 /// Creates package state storage used by future EnvCompare upgrade migrations.
 /// </summary>
-public sealed class EnvCompareInitialMigration : AsyncMigrationBase
+public sealed class EnvCompareInitialMigration : MigrationBase
 {
     private const string TableName = "EnvComparePackageState";
 
@@ -18,7 +18,7 @@ public sealed class EnvCompareInitialMigration : AsyncMigrationBase
     }
 
     /// <inheritdoc />
-    protected override Task MigrateAsync()
+    protected override void Migrate()
     {
         if (TableExists(TableName) == false)
         {
@@ -37,7 +37,5 @@ public sealed class EnvCompareInitialMigration : AsyncMigrationBase
                 EnvCompareMigrationPlan.InitialVersion,
                 DateTime.UtcNow);
         }
-
-        return Task.CompletedTask;
     }
 }

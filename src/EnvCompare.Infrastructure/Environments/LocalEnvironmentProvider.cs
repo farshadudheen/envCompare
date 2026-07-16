@@ -17,11 +17,10 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
 {
     private readonly IContentService _contentService;
     private readonly IMediaService _mediaService;
-    private readonly ILanguageService _languageService;
+    private readonly ILocalizationService _localizationService;
     private readonly IContentTypeService _contentTypeService;
     private readonly IMediaTypeService _mediaTypeService;
     private readonly IDataTypeService _dataTypeService;
-    private readonly IDictionaryItemService _dictionaryItemService;
     private readonly IEnvironmentCache _cache;
     private readonly ILogger<LocalEnvironmentProvider> _logger;
 
@@ -31,21 +30,19 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
     public LocalEnvironmentProvider(
         IContentService contentService,
         IMediaService mediaService,
-        ILanguageService languageService,
+        ILocalizationService localizationService,
         IContentTypeService contentTypeService,
         IMediaTypeService mediaTypeService,
         IDataTypeService dataTypeService,
-        IDictionaryItemService dictionaryItemService,
         IEnvironmentCache cache,
         ILogger<LocalEnvironmentProvider> logger)
     {
         _contentService = contentService ?? throw new ArgumentNullException(nameof(contentService));
         _mediaService = mediaService ?? throw new ArgumentNullException(nameof(mediaService));
-        _languageService = languageService ?? throw new ArgumentNullException(nameof(languageService));
+        _localizationService = localizationService ?? throw new ArgumentNullException(nameof(localizationService));
         _contentTypeService = contentTypeService ?? throw new ArgumentNullException(nameof(contentTypeService));
         _mediaTypeService = mediaTypeService ?? throw new ArgumentNullException(nameof(mediaTypeService));
         _dataTypeService = dataTypeService ?? throw new ArgumentNullException(nameof(dataTypeService));
-        _dictionaryItemService = dictionaryItemService ?? throw new ArgumentNullException(nameof(dictionaryItemService));
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -148,17 +145,17 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
 
         return await _cache.GetOrCreateAsync(
             "local:languages",
-            async ct =>
+            ct =>
             {
                 ct.ThrowIfCancellationRequested();
-                var languages = await _languageService.GetAllAsync().ConfigureAwait(false);
-                return (IReadOnlyList<LanguageSnapshot>)languages
+                var languages = _localizationService.GetAllLanguages();
+                return Task.FromResult<IReadOnlyList<LanguageSnapshot>>(languages
                     .Select(l => new LanguageSnapshot(
                         l.IsoCode,
                         l.CultureName,
                         l.IsDefault,
                         l.IsMandatory))
-                    .ToArray();
+                    .ToArray());
             },
             absoluteExpiration: TimeSpan.FromMinutes(5),
             cancellationToken).ConfigureAwait(false);
@@ -218,17 +215,16 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
 
         return await _cache.GetOrCreateAsync(
             "local:data-types",
-            async ct =>
+            ct =>
             {
                 ct.ThrowIfCancellationRequested();
-                // GetAllAsync() with no keys returns every data type.
-                var types = await _dataTypeService.GetAllAsync().ConfigureAwait(false);
+                var types = _dataTypeService.GetAll();
 
-                return (IReadOnlyList<DataTypeSnapshot>)types
+                return Task.FromResult<IReadOnlyList<DataTypeSnapshot>>(types
                     .Where(t => !string.IsNullOrWhiteSpace(t.Name))
                     .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
                     .Select(SnapshotMapper.ToDataTypeSnapshot)
-                    .ToArray();
+                    .ToArray());
             },
             absoluteExpiration: null,
             cancellationToken).ConfigureAwait(false);
@@ -242,18 +238,16 @@ public sealed class LocalEnvironmentProvider : IEnvironmentProvider
 
         return await _cache.GetOrCreateAsync(
             "local:dictionary-items",
-            async ct =>
+            ct =>
             {
                 ct.ThrowIfCancellationRequested();
-                var items = await _dictionaryItemService
-                    .GetDescendantsAsync(parentId: null, filter: null)
-                    .ConfigureAwait(false);
+                var items = _localizationService.GetDictionaryItemDescendants(parentId: null);
 
-                return (IReadOnlyList<DictionaryItemSnapshot>)items
+                return Task.FromResult<IReadOnlyList<DictionaryItemSnapshot>>(items
                     .Where(i => !string.IsNullOrWhiteSpace(i.ItemKey))
                     .OrderBy(i => i.ItemKey, StringComparer.OrdinalIgnoreCase)
                     .Select(SnapshotMapper.ToDictionarySnapshot)
-                    .ToArray();
+                    .ToArray());
             },
             absoluteExpiration: null,
             cancellationToken).ConfigureAwait(false);

@@ -293,6 +293,8 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 **/Client/node_modules/
+# Umbraco 13 branch: Lit Client removed; ignore leftover node_modules if present
+src/EnvCompare.Backoffice/Client/
 
 # Local pack output (also covered by artifacts/)
 *.nupkg

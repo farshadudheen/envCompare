@@ -114,24 +114,34 @@ internal static class SnapshotMapper
             dataType.Key,
             dataType.Name ?? string.Empty,
             dataType.EditorAlias ?? string.Empty,
-            dataType.EditorUiAlias,
+            EditorUiAlias: null,
             dataType.DatabaseType.ToString(),
-            SerializeConfiguration(dataType.ConfigurationData));
+            SerializeConfiguration(dataType.Configuration));
     }
 
-    private static string SerializeConfiguration(IDictionary<string, object>? configuration)
+    private static string SerializeConfiguration(object? configuration)
     {
-        if (configuration is null || configuration.Count == 0)
+        if (configuration is null)
         {
             return string.Empty;
         }
 
-        // Sort keys so identical configs compare equal across environments.
-        var ordered = configuration
-            .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+        if (configuration is IDictionary<string, object> dictionary)
+        {
+            if (dictionary.Count == 0)
+            {
+                return string.Empty;
+            }
 
-        return JsonSerializer.Serialize(ordered, ConfigurationJsonOptions);
+            // Sort keys so identical configs compare equal across environments.
+            var ordered = dictionary
+                .OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+
+            return JsonSerializer.Serialize(ordered, ConfigurationJsonOptions);
+        }
+
+        return JsonSerializer.Serialize(configuration, ConfigurationJsonOptions);
     }
 
     private static ContentTypeSnapshot MapContentType(

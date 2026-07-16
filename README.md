@@ -1,13 +1,13 @@
 # EnvCompare
 
-Umbraco 17 NuGet package for comparing content between Umbraco Cloud environments from the backoffice.
+Umbraco 13 NuGet package for comparing content between Umbraco Cloud environments from the backoffice.
 
 ## Install
 
-Add the package to your Umbraco 17 site:
+Add the package to your Umbraco 13 site:
 
 ```xml
-<PackageReference Include="EnvCompare" Version="0.18.4" />
+<PackageReference Include="EnvCompare" Version="13.0.0" />
 ```
 
 The package auto-registers via `EnvCompareComposer` (`IUmbracoBuilder`). On first run, the package migration creates the `EnvComparePackageState` table to track installed version for future upgrades.
@@ -43,19 +43,13 @@ Remote URLs should be the site root. The provider calls `envcompare/api/v1/...` 
 
 ## Build the NuGet package
 
-Prerequisites: .NET 10 SDK, Node.js 20+ (for the backoffice Client Vite build).
+Prerequisites: .NET 8 SDK.
 
 ```bash
 dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release
 ```
 
-Output: `artifacts/EnvCompare.0.18.4.nupkg`
-
-Skip the Client build when iterating on C# only:
-
-```bash
-dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release -p:SkipClientBuild=true
-```
+Output: `artifacts/EnvCompare.13.0.0.nupkg`
 
 ## Solution layout
 
@@ -70,20 +64,21 @@ EnvCompare.sln
 ## Features
 
 - Compare Local ↔ Development ↔ Staging ↔ Production (any configured pair)
-- Modules: content, media, settings (languages), dictionary (stub)
+- Modules: content, media, settings (languages), dictionary
 - Read-only, admin-only backoffice dashboard under **Settings → EnvCompare**
-- Git-style diff panel, virtual scrolling, tree view, rich filters
-- `POST /umbraco/management/api/v1/envcompare/compare`
+- Git-style diff panel, tree/list views, filters
+- Backoffice API: `POST /umbraco/backoffice/EnvCompare/EnvCompareApi/Compare`
+- Peer API: `/envcompare/api/v1/...` (server-to-server)
 
-## Client development
+## Umbraco 13 notes
 
-```bash
-cd src/EnvCompare.Backoffice/Client
-npm install
-npm run watch
-```
+This branch targets **Umbraco 13** (`.NET 8`, AngularJS backoffice, `package.manifest`).
 
-Assets emit to `src/EnvCompare.Backoffice/wwwroot/App_Plugins/EnvCompare/`.
+- UI: classic `App_Plugins` + AngularJS (not Lit / `umbraco-package.json`)
+- Backoffice API: `UmbracoAuthorizedJsonController` under `/umbraco/backoffice/EnvCompare/...`
+- Migrations: sync `MigrationBase` (not `AsyncMigrationBase`)
+
+The Umbraco 17 (Lit / Management API) package lives on the `main` branch.
 
 ## Migrations
 
@@ -101,7 +96,7 @@ The server-to-server peer API lives at **`/envcompare/api/v1/...`** (not under `
 
 Live/Staging on Umbraco Cloud often has **Public Access (Basic Auth)** enabled. Without bypassing it, requests receive the **Umbraco - Sign In** HTML page (`/umbraco/basic-auth/login`).
 
-**Fixed in 0.17.8+** — peer API routes are registered with ASP.NET Core `ShortCircuit()`, which skips Umbraco Basic Auth middleware. Peer calls are protected by `EnvCompare:PeerApiKey` (Bearer token) instead.
+Peer API routes are registered with ASP.NET Core `ShortCircuit()`, which skips Umbraco Basic Auth middleware. Peer calls are protected by `EnvCompare:PeerApiKey` (Bearer token) instead.
 
 ### Verify peer API
 
@@ -119,18 +114,6 @@ Accept: application/json
 
 Expected: `{"status":"ok","package":"EnvCompare"}`.
 
-You do **not** need `X-Authentication-Shared-Secret` for peer API calls when running **0.17.8+**.
-
-### Legacy: BasicAuthSharedSecret (0.17.7 and earlier)
-
-Versions before 0.17.8 required the Umbraco Basic Auth bypass header for Cloud Live/Staging:
-
-```json
-"BasicAuthSharedSecret": "Live's Umbraco:CMS:BasicAuth:SharedSecret:Value from Cloud portal"
-```
-
-Upgrade to **0.17.8** on all environments to remove this requirement.
-
 ## Troubleshooting install (NU1101)
 
 If restore fails with **Unable to find package EnvCompare.Core** or **EnvCompare.Infrastructure**, you are using an **old** `EnvCompare` nupkg that listed those as separate NuGet dependencies. The current package bundles all three DLLs into a single `EnvCompare` package.
@@ -139,25 +122,13 @@ If restore fails with **Unable to find package EnvCompare.Core** or **EnvCompare
    ```bash
    dotnet pack src/EnvCompare.Backoffice/EnvCompare.Backoffice.csproj -c Release
    ```
-2. Copy `artifacts/EnvCompare.0.17.9.nupkg` to nuget.org or your feed.
+2. Copy `artifacts/EnvCompare.13.0.0.nupkg` to nuget.org or your feed.
 3. In your Umbraco site, reference only the main package:
    ```xml
-   <PackageReference Include="EnvCompare" Version="0.18.4" />
+   <PackageReference Include="EnvCompare" Version="13.0.0" />
    ```
    Do **not** add `EnvCompare.Core` or `EnvCompare.Infrastructure` as separate package references.
 4. Clear the NuGet cache if old metadata is still picked up:
    ```bash
    dotnet nuget locals all --clear
    ```
-
-## Troubleshooting backoffice logout (EnvCompare screen only)
-
-If opening **Settings → EnvCompare** logs you out immediately, the dashboard was calling a non-Management API URL without a valid bearer token. Umbraco treats the 401 as a session failure and redirects to login.
-
-**Fixed in 0.17.3+** — backoffice calls use `/umbraco/management/api/v1/envcompare/...` with bearer auth via `umbHttpClient`.
-
-After upgrading to `EnvCompare` **0.18.4** or later:
-
-1. Restart the Umbraco site.
-2. Hard-refresh the backoffice (Ctrl+F5) so cached `/App_Plugins/EnvCompare/` scripts reload.
-3. Confirm in browser DevTools → Network that `GET /umbraco/management/api/v1/envcompare/environments` returns **200** (not 401).
