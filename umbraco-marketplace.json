@@ -13,7 +13,7 @@
   "AuthorDetails": {
     "Name": "Farshadudheen K",
     "Url": "https://github.com/farshadudheen",
-    "ImageUrl": "https://github.com/settings/profile",
+    "ImageUrl": "https://github.com/farshadudheen.png",
     "SyncContributorsFromRepository": false,
     "Contributors": [
       {
@@ -25,11 +25,11 @@
   "Tags": [ "umbraco cloud", "compare", "environments", "diff" ],
   "Screenshots": [
     {
-      "ImageUrl": "https://raw.githubusercontent.com/farshadudheen/envCompare/blob/main/screenshots/Full.png",
+      "ImageUrl": "https://raw.githubusercontent.com/farshadudheen/envCompare/main/screenshots/Full.png",
       "Caption": "CloudLens comparison dashboard"
     },
     {
-      "ImageUrl": "https://raw.githubusercontent.com/farshadudheen/envCompare/blob/main/screenshots/comaprison.png",
+      "ImageUrl": "https://raw.githubusercontent.com/farshadudheen/envCompare/main/screenshots/comaprison.png",
       "Caption": "CloudLens comparison Check"
     }
   ]

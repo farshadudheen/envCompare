@@ -2,7 +2,7 @@
   "$schema": "../../umbraco-package-schema.json",
   "id": "CloudLens",
   "name": "CloudLens",
-  "version": "1.17.0",
+  "version": "1.17.4",
   "allowTelemetry": true,
   "extensions": [
     {
