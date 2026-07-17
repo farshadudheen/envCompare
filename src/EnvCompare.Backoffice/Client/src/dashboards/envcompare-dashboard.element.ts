@@ -630,7 +630,7 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       <div class="layout">
         <header class="toolbar">
           <div class="brand">
-            <h1>EnvCompare</h1>
+            <h1>CloudLens</h1>
             <p>Compare content between Umbraco Cloud environments (read-only).</p>
           </div>
 

@@ -7,12 +7,12 @@ export const manifests: Array<ManifestDashboard> = [
   {
     type: "dashboard",
     alias: "EnvCompare.Dashboard.Compare",
-    name: "EnvCompare Dashboard",
+    name: "CloudLens Dashboard",
     elementName: "envcompare-dashboard",
     element: () => import("./envcompare-dashboard.element.js"),
     weight: 100,
     meta: {
-      label: "EnvCompare",
+      label: "CloudLens",
       pathname: "envcompare",
     },
     conditions: [

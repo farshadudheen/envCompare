@@ -1,14 +1,14 @@
 {
   "$schema": "../../umbraco-package-schema.json",
-  "id": "EnvCompare",
-  "name": "EnvCompare",
-  "version": "0.1.2",
+  "id": "CloudLens",
+  "name": "CloudLens",
+  "version": "1.17.0",
   "allowTelemetry": true,
   "extensions": [
     {
       "type": "bundle",
       "alias": "EnvCompare.Bundle",
-      "name": "EnvCompare Bundle",
+      "name": "CloudLens Bundle",
       "js": "/App_Plugins/EnvCompare/env-compare.js"
     }
   ]

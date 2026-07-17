@@ -10,7 +10,7 @@ public static class Constants
     /// <summary>
     /// NuGet / package identifier.
     /// </summary>
-    public const string PackageId = "EnvCompare";
+    public const string PackageId = "CloudLens";
 
     /// <summary>
     /// Package semantic version from the built assembly (matches <c>&lt;Version&gt;</c> in the csproj).

@@ -8,14 +8,15 @@
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <RootNamespace>EnvCompare.Backoffice</RootNamespace>
     <AssemblyName>EnvCompare.Backoffice</AssemblyName>
-    <PackageId>EnvCompare</PackageId>
-    <Product>EnvCompare</Product>
-    <Title>EnvCompare</Title>
+    <PackageId>CloudLens</PackageId>
+    <Product>CloudLens</Product>
+    <Title>CloudLens</Title>
     <!-- Single source of truth for the NuGet package version (Visual Studio "Package version" edits this). -->
-    <Version>0.18.4</Version>
+    <Version>1.17.1</Version>
     <Description>Compare content between Umbraco Cloud environments from the backoffice.</Description>
-    <PackageTags>umbraco;umbraco-package;umbraco17;cloud;compare</PackageTags>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-package;umbraco17;cloud;compare</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <PackageIcon>icon.png</PackageIcon>
     <PackageOutputPath>..\..\artifacts</PackageOutputPath>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
@@ -40,6 +41,7 @@
     <None Include="Client\package.json" Pack="false" />
     <None Include="Client\vite.config.ts" Pack="false" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+	  <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,6 +56,11 @@
 
   <PropertyGroup>
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+    <Authors>farshadudheen k</Authors>
+    <Company>CloudLens</Company>
+    <Copyright>Copyright © CloudLens</Copyright>
+    <PackageProjectUrl>https://github.com/farshadudheen/envCompare</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/farshadudheen/envCompare</RepositoryUrl>
   </PropertyGroup>
 
   <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">

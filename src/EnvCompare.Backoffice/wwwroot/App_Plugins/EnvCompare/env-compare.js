@@ -1,20 +1,20 @@
-const a = [
+const e = [
   {
-    name: "EnvCompare Entrypoint",
+    name: "CloudLens Entrypoint",
     alias: "EnvCompare.Entrypoint",
     type: "backofficeEntryPoint",
     js: () => import("./entrypoint-DICCKGz1.js")
   }
-], e = [
+], n = [
   {
     type: "dashboard",
     alias: "EnvCompare.Dashboard.Compare",
-    name: "EnvCompare Dashboard",
+    name: "CloudLens Dashboard",
     elementName: "envcompare-dashboard",
-    element: () => import("./envcompare-dashboard.element-BeCYc6gc.js"),
+    element: () => import("./envcompare-dashboard.element-D0zzy_0_.js"),
     weight: 100,
     meta: {
-      label: "EnvCompare",
+      label: "CloudLens",
       pathname: "envcompare"
     },
     conditions: [
@@ -27,11 +27,11 @@ const a = [
       }
     ]
   }
-], n = [
-  ...a,
-  ...e
+], a = [
+  ...e,
+  ...n
 ];
 export {
-  n as manifests
+  a as manifests
 };
 //# sourceMappingURL=env-compare.js.map

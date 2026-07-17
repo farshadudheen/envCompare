@@ -1,0 +1,32 @@
+{
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "Title": "CloudLens",
+  "Description": "Compare content between Umbraco Cloud environments from the backoffice before every deployment.",
+  "Category": "Developer Tools",
+  "AlternateCategory": "Editor Tools",
+  "LicenseTypes": [ "Free" ],
+  "PackageType": "Package",
+  "DocumentationUrl": "https://github.com/farshadudheen/envCompare/blob/main/README.md",
+  "IssueTrackerUrl": "https://github.com/farshadudheen/envCompare/issues",
+  "LookingForMaintainer": false,
+  "VersionDependencyMode": "Default",
+  "AuthorDetails": {
+    "Name": "Farshadudheen K",
+    "Url": "https://github.com/your-username",
+    "ImageUrl": "https://github.com/your-username.png",
+    "SyncContributorsFromRepository": false,
+    "Contributors": [
+      {
+        "Name": "Phases",
+        "Url": "https://github.com/phases"
+      }
+    ]
+  },
+  "Tags": [ "umbraco cloud", "compare", "environments", "diff" ],
+  "Screenshots": [
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/your-org/CloudLens/main/docs/screenshots/dashboard.png",
+      "Caption": "CloudLens comparison dashboard"
+    }
+  ]
+}
