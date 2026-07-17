@@ -12,7 +12,7 @@
     <Product>CloudLens</Product>
     <Title>CloudLens</Title>
     <!-- Single source of truth for the NuGet package version (Visual Studio "Package version" edits this). -->
-    <Version>1.17.2</Version>
+    <Version>1.17.3</Version>
     <Description>Compare content between Umbraco Cloud environments from the backoffice.</Description>
     <PackageTags>umbraco;umbraco-marketplace;umbraco-package;umbraco17;cloud;compare</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

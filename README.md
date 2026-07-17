@@ -6,7 +6,7 @@ Inspect your Umbraco Cloud environments before every deployment.
 Add the package to your Umbraco 17 site:
 
 ```xml
-<PackageReference Include="CloudLens" Version="1.17.2" />
+<PackageReference Include="CloudLens" Version="1.17.3" />
 ```
 
 Configure remote environments in `appsettings.json`:
