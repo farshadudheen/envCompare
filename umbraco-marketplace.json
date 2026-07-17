@@ -25,8 +25,12 @@
   "Tags": [ "umbraco cloud", "compare", "environments", "diff" ],
   "Screenshots": [
     {
-      "ImageUrl": "https://raw.githubusercontent.com/your-org/CloudLens/main/docs/screenshots/dashboard.png",
+      "ImageUrl": "https://raw.githubusercontent.com/farshadudheen/envCompare/blob/main/screenshots/Full.png",
       "Caption": "CloudLens comparison dashboard"
+    },
+    {
+      "ImageUrl": "https://raw.githubusercontent.com/farshadudheen/envCompare/blob/main/screenshots/comaprison.png",
+      "Caption": "CloudLens comparison Check"
     }
   ]
 }
