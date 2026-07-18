@@ -1,13 +1,13 @@
-import { css as K, property as M, customElement as Y, html as u, state as f } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement as J } from "@umbraco-cms/backoffice/lit-element";
-import { umbHttpClient as Q } from "@umbraco-cms/backoffice/http-client";
-const Z = [
+import { css as Q, property as z, customElement as Z, html as p, state as m } from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement as ee } from "@umbraco-cms/backoffice/lit-element";
+import { umbHttpClient as te } from "@umbraco-cms/backoffice/http-client";
+const re = [
   { type: "http", scheme: "bearer" }
 ];
-async function Le() {
-  const { data: e, error: t, response: r } = await Q.get({
+async function ze() {
+  const { data: e, error: t, response: r } = await te.get({
     url: "/umbraco/management/api/v1/envcompare/environments",
-    security: Z
+    security: re
   });
   if (t || !r.ok)
     throw new Error(
@@ -16,10 +16,10 @@ async function Le() {
   const i = e;
   return Array.isArray(i) ? i : [];
 }
-async function Me(e) {
-  const { data: t, error: r, response: i } = await Q.post({
+async function Pe(e) {
+  const { data: t, error: r, response: i } = await te.post({
     url: "/umbraco/management/api/v1/envcompare/compare",
-    security: Z,
+    security: re,
     body: e,
     headers: {
       "Content-Type": "application/json"
@@ -31,17 +31,17 @@ async function Me(e) {
   }
   return t;
 }
-function F(e) {
+function P(e) {
   return typeof e == "number" ? ["Identical", "Added", "Missing", "Modified", "Ignored"][e] ?? String(e) : e;
 }
-function j(e) {
+function X(e) {
   return e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-function Fe(e, t) {
-  const r = G(e), i = G(t), n = ee(r, i);
-  return Pe(r, i, n);
+function Be(e, t) {
+  const r = Y(e), i = Y(t), n = ie(r, i);
+  return De(r, i, n);
 }
-function ze(e, t) {
+function Ie(e, t) {
   const r = e ?? "", i = t ?? "";
   if (r === i)
     return {
@@ -62,69 +62,69 @@ function ze(e, t) {
 `), a = i.split(`
 `);
   if (n.length === 1 && a.length === 1)
-    return Fe(r, i);
-  const l = ee(n, a), d = [], p = [];
-  let c = 0, g = 0;
+    return Be(r, i);
+  const l = ie(n, a), c = [], g = [];
+  let d = 0, f = 0;
   for (const b of l) {
-    for (; c < n.length && n[c] !== b; )
-      d.push({ text: `${n[c]}
-`, type: "removed" }), c++;
-    for (; g < a.length && a[g] !== b; )
-      p.push({ text: `${a[g]}
-`, type: "added" }), g++;
-    c < n.length && g < a.length && (d.push({ text: `${b}
-`, type: "same" }), p.push({ text: `${b}
-`, type: "same" }), c++, g++);
+    for (; d < n.length && n[d] !== b; )
+      c.push({ text: `${n[d]}
+`, type: "removed" }), d++;
+    for (; f < a.length && a[f] !== b; )
+      g.push({ text: `${a[f]}
+`, type: "added" }), f++;
+    d < n.length && f < a.length && (c.push({ text: `${b}
+`, type: "same" }), g.push({ text: `${b}
+`, type: "same" }), d++, f++);
   }
-  for (; c < n.length; )
-    d.push({ text: `${n[c]}
-`, type: "removed" }), c++;
-  for (; g < a.length; )
-    p.push({ text: `${a[g]}
-`, type: "added" }), g++;
+  for (; d < n.length; )
+    c.push({ text: `${n[d]}
+`, type: "removed" }), d++;
+  for (; f < a.length; )
+    g.push({ text: `${a[f]}
+`, type: "added" }), f++;
   return {
-    left: { parts: A(d) },
-    right: { parts: A(p) }
+    left: { parts: E(c) },
+    right: { parts: E(g) }
   };
 }
-function G(e) {
+function Y(e) {
   const t = [], r = /(\s+|[^\s]+)/g;
   let i;
   for (; (i = r.exec(e)) !== null; )
     t.push(i[0]);
   return t.length > 0 ? t : [e];
 }
-function ee(e, t) {
+function ie(e, t) {
   const r = e.length + 1, i = t.length + 1, n = Array.from({ length: r }, () => Array(i).fill(0));
-  for (let p = 1; p < r; p++)
-    for (let c = 1; c < i; c++)
-      e[p - 1] === t[c - 1] ? n[p][c] = n[p - 1][c - 1] + 1 : n[p][c] = Math.max(n[p - 1][c], n[p][c - 1]);
+  for (let g = 1; g < r; g++)
+    for (let d = 1; d < i; d++)
+      e[g - 1] === t[d - 1] ? n[g][d] = n[g - 1][d - 1] + 1 : n[g][d] = Math.max(n[g - 1][d], n[g][d - 1]);
   const a = [];
-  let l = e.length, d = t.length;
-  for (; l > 0 && d > 0; )
-    e[l - 1] === t[d - 1] ? (a.unshift(e[l - 1]), l--, d--) : n[l - 1][d] >= n[l][d - 1] ? l-- : d--;
+  let l = e.length, c = t.length;
+  for (; l > 0 && c > 0; )
+    e[l - 1] === t[c - 1] ? (a.unshift(e[l - 1]), l--, c--) : n[l - 1][c] >= n[l][c - 1] ? l-- : c--;
   return a;
 }
-function Pe(e, t, r) {
+function De(e, t, r) {
   const i = [], n = [];
   let a = 0, l = 0;
-  for (const d of r) {
-    for (; a < e.length && e[a] !== d; )
+  for (const c of r) {
+    for (; a < e.length && e[a] !== c; )
       i.push({ text: e[a], type: "removed" }), a++;
-    for (; l < t.length && t[l] !== d; )
+    for (; l < t.length && t[l] !== c; )
       n.push({ text: t[l], type: "added" }), l++;
-    a < e.length && l < t.length && (i.push({ text: d, type: "same" }), n.push({ text: d, type: "same" }), a++, l++);
+    a < e.length && l < t.length && (i.push({ text: c, type: "same" }), n.push({ text: c, type: "same" }), a++, l++);
   }
   for (; a < e.length; )
     i.push({ text: e[a], type: "removed" }), a++;
   for (; l < t.length; )
     n.push({ text: t[l], type: "added" }), l++;
   return {
-    left: { parts: A(i) },
-    right: { parts: A(n) }
+    left: { parts: E(i) },
+    right: { parts: E(n) }
   };
 }
-function A(e) {
+function E(e) {
   if (e.length === 0)
     return e;
   const t = [{ ...e[0] }];
@@ -134,27 +134,27 @@ function A(e) {
   }
   return t;
 }
-var Be = Object.defineProperty, Ie = Object.getOwnPropertyDescriptor, te = (e) => {
+var Re = Object.defineProperty, Oe = Object.getOwnPropertyDescriptor, ne = (e) => {
   throw TypeError(e);
-}, k = (e, t, r, i) => {
-  for (var n = i > 1 ? void 0 : i ? Ie(t, r) : t, a = e.length - 1, l; a >= 0; a--)
+}, C = (e, t, r, i) => {
+  for (var n = i > 1 ? void 0 : i ? Oe(t, r) : t, a = e.length - 1, l; a >= 0; a--)
     (l = e[a]) && (n = (i ? l(t, r, n) : l(n)) || n);
-  return i && n && Be(t, r, n), n;
-}, De = (e, t, r) => t.has(e) || te("Cannot " + r), Oe = (e, t, r) => t.has(e) ? te("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), X = (e, t, r) => (De(e, t, "access private method"), r), C, B;
-let _ = class extends J {
+  return i && n && Re(t, r, n), n;
+}, We = (e, t, r) => t.has(e) || ne("Cannot " + r), Ve = (e, t, r) => t.has(e) ? ne("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), J = (e, t, r) => (We(e, t, "access private method"), r), S, O;
+let _ = class extends ee {
   constructor() {
-    super(...arguments), Oe(this, C), this.item = null, this.environmentA = "Environment A", this.environmentB = "Environment B", this.fullscreen = !1;
+    super(...arguments), Ve(this, S), this.item = null, this.environmentA = "Environment A", this.environmentB = "Environment B", this.fullscreen = !1;
   }
   render() {
     if (!this.item)
-      return u`
+      return p`
         <div class="empty">
           <p>Select a result row to inspect differences.</p>
           <p class="hint">Changed text is highlighted like a Git diff.</p>
         </div>
       `;
-    const e = this.item, t = F(e.status);
-    return u`
+    const e = this.item, t = P(e.status);
+    return p`
       <div class="diff-details">
         <header class="diff-header">
           <div>
@@ -184,20 +184,20 @@ let _ = class extends J {
         </dl>
 
         <div class="diff-columns">
-          ${X(this, C, B).call(this, "Environment A", e.environmentAValue, "left", e.environmentBValue)}
-          ${X(this, C, B).call(this, "Environment B", e.environmentBValue, "right", e.environmentAValue)}
+          ${J(this, S, O).call(this, "Environment A", e.environmentAValue, "left", e.environmentBValue)}
+          ${J(this, S, O).call(this, "Environment B", e.environmentBValue, "right", e.environmentAValue)}
         </div>
       </div>
     `;
   }
 };
-C = /* @__PURE__ */ new WeakSet();
-B = function(e, t, r, i) {
-  const n = ze(
+S = /* @__PURE__ */ new WeakSet();
+O = function(e, t, r, i) {
+  const n = Ie(
     r === "left" ? t : i,
     r === "left" ? i : t
   ), a = r === "left" ? n.left.parts : n.right.parts, l = t ?? "(missing)";
-  return u`
+  return p`
       <section class="diff-side" aria-label=${e}>
         <header class="diff-side-header">
           <h3>${e}</h3>
@@ -205,16 +205,16 @@ B = function(e, t, r, i) {
         </header>
         <pre class="diff-pre">
           ${a.length > 0 ? a.map(
-    (d) => u`
-                  <span class="diff-${d.type}">${j(d.text)}</span>
+    (c) => p`
+                  <span class="diff-${c.type}">${X(c.text)}</span>
                 `
-  ) : u`<span class="diff-empty">${j(l)}</span>`}
+  ) : p`<span class="diff-empty">${X(l)}</span>`}
         </pre>
       </section>
     `;
 };
 _.styles = [
-  K`
+  Q`
       :host {
         display: block;
         color: var(--umb-color-text);
@@ -406,66 +406,82 @@ _.styles = [
       }
     `
 ];
-k([
-  M({ attribute: !1 })
+C([
+  z({ attribute: !1 })
 ], _.prototype, "item", 2);
-k([
-  M({ type: String })
+C([
+  z({ type: String })
 ], _.prototype, "environmentA", 2);
-k([
-  M({ type: String })
+C([
+  z({ type: String })
 ], _.prototype, "environmentB", 2);
-k([
-  M({ type: Boolean, reflect: !0 })
+C([
+  z({ type: Boolean, reflect: !0 })
 ], _.prototype, "fullscreen", 2);
-_ = k([
-  Y("envcompare-diff-panel")
+_ = C([
+  Z("envcompare-diff-panel")
 ], _);
-const Re = {
+const He = {
   Missing: 4,
   Modified: 3,
   Added: 2,
   Identical: 1,
   Ignored: 0
 };
-function re(e) {
+function se(e) {
   const t = /* @__PURE__ */ new Map(), r = [], i = [...e].sort((n, a) => {
-    const l = n.path ?? n.id, d = a.path ?? a.id;
-    return l.localeCompare(d);
+    const l = n.path ?? n.id, c = a.path ?? a.id;
+    return l.localeCompare(c);
   });
   for (const n of i) {
-    const l = (n.path?.trim() || n.id).split(",").filter((c) => c.length > 0), d = Math.max(l.length, 1);
-    let p = "";
-    for (let c = 0; c < d; c++) {
-      const g = l[c] ?? n.id, b = p;
-      if (p = p ? `${p},${g}` : g, t.has(p)) {
-        if (c === d - 1) {
-          const v = t.get(p);
-          v.item = n, v.label = n.name, v.id = n.id, v.statusRank = Math.max(v.statusRank, q(n));
+    const l = (n.path?.trim() || n.id).split(",").filter((f) => f.length > 0), c = Math.max(l.length, 1), g = `${n.id}|${n.culture ?? ""}|${n.segment ?? ""}`;
+    let d = "";
+    for (let f = 0; f < c; f++) {
+      const b = l[f] ?? n.id, T = d;
+      if (d = d ? `${d},${b}` : b, t.has(d)) {
+        if (f === c - 1) {
+          const v = t.get(d), y = v.item ? `${v.item.id}|${v.item.culture ?? ""}|${v.item.segment ?? ""}` : null;
+          if (y === null || y === g)
+            v.item = n, v.label = n.name, v.id = n.id, v.statusRank = Math.max(v.statusRank, R(n));
+          else {
+            const I = `${d}::${g}`;
+            if (!t.has(I)) {
+              const D = {
+                id: n.id,
+                label: n.name,
+                path: I,
+                depth: f,
+                item: n,
+                children: [],
+                statusRank: R(n)
+              };
+              t.set(I, D), T ? t.get(T)?.children.push(D) : r.push(D);
+            }
+          }
         }
       } else {
-        const v = c === d - 1, P = {
-          id: v ? n.id : p,
-          label: v ? n.name : `… ${g}`,
-          path: p,
-          depth: c,
+        const v = f === c - 1, y = {
+          id: v ? n.id : d,
+          label: v ? n.name : `… ${b}`,
+          path: d,
+          depth: f,
           item: v ? n : null,
           children: [],
-          statusRank: v ? q(n) : 0
+          statusRank: v ? R(n) : 0
         };
-        t.set(p, P), b ? t.get(b)?.children.push(P) : r.push(P);
+        t.set(d, y), T ? t.get(T)?.children.push(y) : r.push(y);
       }
     }
   }
-  return ne(r), r;
+  return oe(r), r;
 }
-function ie(e, t, r = 0) {
+function ae(e, t, r = 0) {
   const i = [];
   for (const n of e)
-    i.push({ node: n, depth: r }), n.children.length > 0 && t.has(n.path) && i.push(...ie(n.children, t, r + 1));
+    i.push({ node: n, depth: r }), n.children.length > 0 && t.has(n.path) && i.push(...ae(n.children, t, r + 1));
   return i;
 }
-function We(e) {
+function Ne(e) {
   const t = /* @__PURE__ */ new Set(), r = /* @__PURE__ */ new Set();
   for (const i of e)
     i.culture && t.add(i.culture), i.contentType && r.add(i.contentType);
@@ -474,61 +490,61 @@ function We(e) {
     contentTypes: [...r].sort()
   };
 }
-function q(e) {
-  return Re[F(e.status)] ?? 0;
+function R(e) {
+  return He[P(e.status)] ?? 0;
 }
-function ne(e) {
+function oe(e) {
   for (const t of e)
-    t.children.length > 0 && (ne(t.children), t.statusRank = Math.max(
+    t.children.length > 0 && (oe(t.children), t.statusRank = Math.max(
       t.statusRank,
       ...t.children.map((r) => r.statusRank)
     ));
 }
-function se(e, t, r, i, n = 4) {
+function le(e, t, r, i, n = 4) {
   if (r <= 0 || i <= 0)
     return { start: 0, end: 0, offsetTop: 0, totalHeight: 0 };
-  const a = r * i, l = Math.max(0, Math.floor(e / i) - n), d = Math.ceil(t / i) + n * 2, p = Math.min(r, l + d);
+  const a = r * i, l = Math.max(0, Math.floor(e / i) - n), c = Math.ceil(t / i) + n * 2, g = Math.min(r, l + c);
   return {
     start: l,
-    end: p,
+    end: g,
     offsetTop: l * i,
     totalHeight: a
   };
 }
-var Ve = Object.defineProperty, He = Object.getOwnPropertyDescriptor, ae = (e) => {
+var Ue = Object.defineProperty, je = Object.getOwnPropertyDescriptor, de = (e) => {
   throw TypeError(e);
-}, m = (e, t, r, i) => {
-  for (var n = i > 1 ? void 0 : i ? He(t, r) : t, a = e.length - 1, l; a >= 0; a--)
+}, h = (e, t, r, i) => {
+  for (var n = i > 1 ? void 0 : i ? je(t, r) : t, a = e.length - 1, l; a >= 0; a--)
     (l = e[a]) && (n = (i ? l(t, r, n) : l(n)) || n);
-  return i && n && Ve(t, r, n), n;
-}, R = (e, t, r) => t.has(e) || ae("Cannot " + r), x = (e, t, r) => (R(e, t, "read from private field"), t.get(e)), w = (e, t, r) => t.has(e) ? ae("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), I = (e, t, r, i) => (R(e, t, "write to private field"), t.set(e, r), r), o = (e, t, r) => (R(e, t, "access private method"), r), T, E, L, S, s, oe, le, de, ce, pe, ue, he, me, W, z, fe, ge, V, ve, be, _e, H, ye, we, D, y, $, N, $e, xe, ke, Ce, Se, Ae, Te, O;
-const Ee = 52, U = {
+  return i && n && Ue(t, r, n), n;
+}, N = (e, t, r) => t.has(e) || de("Cannot " + r), k = (e, t, r) => (N(e, t, "read from private field"), t.get(e)), $ = (e, t, r) => t.has(e) ? de("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, r), W = (e, t, r, i) => (N(e, t, "write to private field"), t.set(e, r), r), o = (e, t, r) => (N(e, t, "access private method"), r), L, M, F, A, s, ce, pe, ue, he, me, fe, ge, ve, U, B, be, _e, j, ye, we, $e, K, xe, ke, V, w, x, q, Ce, Te, Se, Ae, Ee, Le, Me, H;
+const Fe = 52, G = {
   content: "content",
   media: "media",
   settings: "settings",
   dictionary: "dictionary"
-}, Ne = {
+}, Ke = {
   Identical: "✔",
   Added: "＋",
   Missing: "−",
   Modified: "△",
   Ignored: "○"
 };
-let h = class extends J {
+let u = class extends ee {
   constructor() {
-    super(...arguments), w(this, s), this._environments = [], this._environmentA = "Local", this._environmentB = "", this._isComparing = !1, this._isLoadingEnvironments = !0, this._progress = 0, this._statusMessage = "Loading environments…", this._activeTab = "content", this._viewMode = "tree", this._search = "", this._statusFilter = "", this._cultureFilter = "", this._contentTypeFilter = "", this._result = null, this._selectedItem = null, this._expandedPaths = /* @__PURE__ */ new Set(), this._listScrollTop = 0, this._listViewportHeight = 420, this._diffPanelWidth = 22, this._diffFullscreen = !1, w(this, T, null), w(this, E, 0), w(this, L, 22), w(this, S, (e) => {
+    super(...arguments), $(this, s), this._environments = [], this._environmentA = "Local", this._environmentB = "", this._isComparing = !1, this._isLoadingEnvironments = !0, this._progress = 0, this._statusMessage = "Loading environments…", this._activeTab = "content", this._viewMode = "tree", this._search = "", this._statusFilter = "", this._cultureFilter = "", this._contentTypeFilter = "", this._result = null, this._selectedItem = null, this._expandedPaths = /* @__PURE__ */ new Set(), this._listScrollTop = 0, this._listViewportHeight = 420, this._diffPanelWidth = 22, this._diffFullscreen = !1, $(this, L, null), $(this, M, 0), $(this, F, 22), $(this, A, (e) => {
       e.key === "Escape" && this._diffFullscreen && (e.preventDefault(), this._diffFullscreen = !1);
     });
   }
   connectedCallback() {
-    super.connectedCallback(), o(this, s, oe).call(this), window.addEventListener("keydown", x(this, S));
+    super.connectedCallback(), o(this, s, ce).call(this), window.addEventListener("keydown", k(this, A));
   }
   disconnectedCallback() {
-    window.removeEventListener("keydown", x(this, S)), super.disconnectedCallback();
+    window.removeEventListener("keydown", k(this, A)), super.disconnectedCallback();
   }
   render() {
-    const e = o(this, s, z).call(this).length;
-    return u`
+    const e = o(this, s, B).call(this).length;
+    return p`
       <div class="layout">
         <header class="toolbar">
           <div class="brand">
@@ -542,9 +558,9 @@ let h = class extends J {
               <select
                 .value=${this._environmentA}
                 ?disabled=${this._isComparing || this._isLoadingEnvironments}
-                @change=${o(this, s, le)}
+                @change=${o(this, s, pe)}
               >
-                ${o(this, s, D).call(this, this._environmentA)}
+                ${o(this, s, V).call(this, this._environmentA)}
               </select>
             </label>
 
@@ -553,7 +569,7 @@ let h = class extends J {
               label="Swap environments"
               compact
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
-              @click=${o(this, s, me)}
+              @click=${o(this, s, ve)}
             >
               ⇄
             </uui-button>
@@ -563,9 +579,9 @@ let h = class extends J {
               <select
                 .value=${this._environmentB}
                 ?disabled=${this._isComparing || this._isLoadingEnvironments}
-                @change=${o(this, s, de)}
+                @change=${o(this, s, ue)}
               >
-                ${o(this, s, D).call(this, this._environmentB)}
+                ${o(this, s, V).call(this, this._environmentB)}
               </select>
             </label>
 
@@ -574,7 +590,7 @@ let h = class extends J {
               color="positive"
               label="Compare"
               ?disabled=${this._isComparing || this._isLoadingEnvironments}
-              @click=${o(this, s, we)}
+              @click=${o(this, s, ke)}
             >
               ${this._isComparing ? "Comparing…" : "Compare"}
             </uui-button>
@@ -592,69 +608,71 @@ let h = class extends J {
         </header>
 
         <section class="summary" aria-label="Comparison summary">
-          ${o(this, s, y).call(this, "Total Compared", this._result ? String(this._result.totalCompared) : "—", "neutral")}
-          ${o(this, s, y).call(this, "Modified", this._result ? String(this._result.modifiedCount) : "—", "modified")}
-          ${o(this, s, y).call(this, "Missing", this._result ? String(this._result.missingCount) : "—", "missing")}
-          ${o(this, s, y).call(this, "Added", this._result ? String(this._result.addedCount) : "—", "added")}
-          ${o(this, s, y).call(this, "Identical", this._result ? String(this._result.identicalCount) : "—", "identical")}
+          ${o(this, s, w).call(this, "Total Compared", this._result ? String(this._result.totalCompared) : "—", "neutral")}
+          ${o(this, s, w).call(this, "Modified", this._result ? String(this._result.modifiedCount) : "—", "modified")}
+          ${o(this, s, w).call(this, "Missing", this._result ? String(this._result.missingCount) : "—", "missing")}
+          ${o(this, s, w).call(this, "Added", this._result ? String(this._result.addedCount) : "—", "added")}
+          ${o(this, s, w).call(this, "Identical", this._result ? String(this._result.identicalCount) : "—", "identical")}
         </section>
 
         <div
           class="workspace"
           style="--diff-width:${this._diffPanelWidth}rem"
         >
-          ${o(this, s, Se).call(this)}
+          ${o(this, s, Ee).call(this)}
 
           <main class="results">
             <nav class="tabs" aria-label="Result categories">
-              ${o(this, s, $).call(this, "content", "Content")}
-              ${o(this, s, $).call(this, "media", "Media")}
-              ${o(this, s, $).call(this, "settings", "Settings")}
-              ${o(this, s, $).call(this, "dictionary", "Dictionary")}
+              ${o(this, s, x).call(this, "content", "Content")}
+              ${o(this, s, x).call(this, "media", "Media")}
+              ${o(this, s, x).call(this, "settings", "Settings")}
+              ${o(this, s, x).call(this, "dictionary", "Dictionary")}
             </nav>
 
             <div class="tree-panel ${this._isComparing ? "is-loading" : ""}">
               <div class="tree-toolbar">
                 <h2>${this._activeTab}</h2>
                 <span class="result-count">${e} visible</span>
-                <div class="view-toggle" role="group" aria-label="View mode">
-                  <button
-                    type="button"
-                    class="view-btn ${this._viewMode === "tree" ? "is-active" : ""}"
-                    @click=${() => {
+                ${this._activeTab === "content" ? p`
+                      <div class="view-toggle" role="group" aria-label="View mode">
+                        <button
+                          type="button"
+                          class="view-btn ${this._viewMode === "tree" ? "is-active" : ""}"
+                          @click=${() => {
       this._viewMode = "tree", this._listScrollTop = 0;
     }}
-                  >
-                    Tree
-                  </button>
-                  <button
-                    type="button"
-                    class="view-btn ${this._viewMode === "list" ? "is-active" : ""}"
-                    @click=${() => {
+                        >
+                          Tree
+                        </button>
+                        <button
+                          type="button"
+                          class="view-btn ${this._viewMode === "list" ? "is-active" : ""}"
+                          @click=${() => {
       this._viewMode = "list", this._listScrollTop = 0;
     }}
-                  >
-                    List
-                  </button>
-                </div>
-                ${this._viewMode === "tree" ? u`
-                      <button type="button" class="link-btn" @click=${o(this, s, V)}>
-                        Expand all
-                      </button>
-                      <button type="button" class="link-btn" @click=${o(this, s, ve)}>
-                        Collapse all
-                      </button>
+                        >
+                          List
+                        </button>
+                      </div>
+                      ${this._viewMode === "tree" ? p`
+                            <button type="button" class="link-btn" @click=${o(this, s, j)}>
+                              Expand all
+                            </button>
+                            <button type="button" class="link-btn" @click=${o(this, s, ye)}>
+                              Collapse all
+                            </button>
+                          ` : ""}
                     ` : ""}
               </div>
 
-              ${this._isComparing ? u`
+              ${this._isComparing ? p`
                     <div class="loading-overlay" aria-live="polite">
                       <div class="spinner" aria-hidden="true"></div>
                       <p>Running comparison…</p>
                     </div>
                   ` : ""}
 
-              ${o(this, s, Ce).call(this)}
+              ${o(this, s, Ae).call(this)}
             </div>
           </main>
 
@@ -663,7 +681,7 @@ let h = class extends J {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize diff panel"
-            @pointerdown=${o(this, s, ye)}
+            @pointerdown=${o(this, s, xe)}
           ></div>
 
           <aside class="diff-panel" aria-label="Property differences">
@@ -675,16 +693,16 @@ let h = class extends J {
                 title="Open fullscreen"
                 aria-label="Open differences in fullscreen"
                 ?disabled=${!this._selectedItem}
-                @click=${o(this, s, Ae)}
+                @click=${o(this, s, Le)}
               >
                 ⛶
               </button>
             </div>
-            ${o(this, s, O).call(this)}
+            ${o(this, s, H).call(this)}
           </aside>
         </div>
 
-        ${this._diffFullscreen ? u`
+        ${this._diffFullscreen ? p`
               <div
                 class="diff-fullscreen"
                 role="dialog"
@@ -700,13 +718,13 @@ let h = class extends J {
                     type="button"
                     class="close-btn"
                     aria-label="Close fullscreen"
-                    @click=${o(this, s, Te)}
+                    @click=${o(this, s, Me)}
                   >
                     Close
                   </button>
                 </header>
                 <div class="diff-fullscreen-body">
-                  ${o(this, s, O).call(this, !0)}
+                  ${o(this, s, H).call(this, !0)}
                 </div>
               </div>
             ` : ""}
@@ -714,15 +732,15 @@ let h = class extends J {
     `;
   }
 };
-T = /* @__PURE__ */ new WeakMap();
-E = /* @__PURE__ */ new WeakMap();
 L = /* @__PURE__ */ new WeakMap();
-S = /* @__PURE__ */ new WeakMap();
+M = /* @__PURE__ */ new WeakMap();
+F = /* @__PURE__ */ new WeakMap();
+A = /* @__PURE__ */ new WeakMap();
 s = /* @__PURE__ */ new WeakSet();
-oe = async function() {
+ce = async function() {
   this._isLoadingEnvironments = !0;
   try {
-    const e = await Le();
+    const e = await ze();
     this._environments = e;
     const t = e.find((i) => i.isLocal)?.name ?? "Local", r = e.find((i) => !i.isLocal)?.name ?? e.find((i) => i.name !== t)?.name ?? "";
     this._environmentA = t, this._environmentB = r, this._statusMessage = e.length > 1 ? "Select two environments, then compare." : "Only Local is available. Configure remote ApiUrl values in appsettings.";
@@ -739,30 +757,30 @@ oe = async function() {
     this._isLoadingEnvironments = !1;
   }
 };
-le = function(e) {
+pe = function(e) {
   this._environmentA = e.target.value;
 };
-de = function(e) {
+ue = function(e) {
   this._environmentB = e.target.value;
 };
-ce = function(e) {
+he = function(e) {
   this._search = e.target.value, this._listScrollTop = 0;
 };
-pe = function(e) {
+me = function(e) {
   this._statusFilter = e.target.value, this._listScrollTop = 0;
 };
-ue = function(e) {
+fe = function(e) {
   this._cultureFilter = e.target.value, this._listScrollTop = 0;
 };
-he = function(e) {
+ge = function(e) {
   this._contentTypeFilter = e.target.value, this._listScrollTop = 0;
 };
-me = function() {
+ve = function() {
   const e = this._environmentA;
   this._environmentA = this._environmentB, this._environmentB = e;
 };
-W = function(e) {
-  const t = F(e.status);
+U = function(e) {
+  const t = P(e.status);
   if (this._statusFilter && t.toLowerCase() !== this._statusFilter.toLowerCase() || this._cultureFilter && e.culture?.toLowerCase() !== this._cultureFilter.toLowerCase() || this._contentTypeFilter && e.contentType?.toLowerCase() !== this._contentTypeFilter.toLowerCase())
     return !1;
   if (this._search.trim()) {
@@ -778,51 +796,51 @@ W = function(e) {
   }
   return !0;
 };
-z = function() {
-  return (this._result?.items ?? []).filter((t) => (t.moduleAlias ?? "content").toLowerCase() === U[this._activeTab] && o(this, s, W).call(this, t));
+B = function() {
+  return (this._result?.items ?? []).filter((t) => (t.moduleAlias ?? "content").toLowerCase() === G[this._activeTab] && o(this, s, U).call(this, t));
 };
-fe = function(e) {
-  return (this._result?.items ?? []).filter((r) => (r.moduleAlias ?? "content").toLowerCase() === U[e] && o(this, s, W).call(this, r)).length;
+be = function(e) {
+  return (this._result?.items ?? []).filter((r) => (r.moduleAlias ?? "content").toLowerCase() === G[e] && o(this, s, U).call(this, r)).length;
 };
-ge = function() {
+_e = function() {
   const e = (this._result?.items ?? []).filter(
-    (t) => (t.moduleAlias ?? "content").toLowerCase() === U[this._activeTab]
+    (t) => (t.moduleAlias ?? "content").toLowerCase() === G[this._activeTab]
   );
-  return We(e);
+  return Ne(e);
 };
-V = function() {
-  const e = o(this, s, z).call(this), t = re(e), r = /* @__PURE__ */ new Set(), i = (n) => {
+j = function() {
+  const e = o(this, s, B).call(this), t = se(e), r = /* @__PURE__ */ new Set(), i = (n) => {
     for (const a of n)
       a.children.length > 0 && (r.add(a.path), i(a.children));
   };
   i(t), this._expandedPaths = r;
 };
-ve = function() {
+ye = function() {
   this._expandedPaths = /* @__PURE__ */ new Set();
 };
-be = function(e, t) {
+we = function(e, t) {
   t.stopPropagation();
   const r = new Set(this._expandedPaths);
   r.has(e) ? r.delete(e) : r.add(e), this._expandedPaths = r;
 };
-_e = function(e) {
+$e = function(e) {
   this._selectedItem = e;
 };
-H = function(e) {
+K = function(e) {
   const t = e.target;
   this._listScrollTop = t.scrollTop, this._listViewportHeight = t.clientHeight;
 };
-ye = function(e) {
-  e.preventDefault(), I(this, E, e.clientX), I(this, L, this._diffPanelWidth);
+xe = function(e) {
+  e.preventDefault(), W(this, M, e.clientX), W(this, F, this._diffPanelWidth);
   const t = (i) => {
-    const n = x(this, E) - i.clientX, a = Math.min(40, Math.max(14, x(this, L) + n / 16));
+    const n = k(this, M) - i.clientX, a = Math.min(40, Math.max(14, k(this, F) + n / 16));
     this._diffPanelWidth = a;
   }, r = () => {
     window.removeEventListener("pointermove", t), window.removeEventListener("pointerup", r);
   };
   window.addEventListener("pointermove", t), window.addEventListener("pointerup", r);
 };
-we = async function() {
+ke = async function() {
   if (!this._environmentA || !this._environmentB) {
     this._statusMessage = "Select both Environment A and Environment B.";
     return;
@@ -831,23 +849,23 @@ we = async function() {
     this._statusMessage = "Environment A and B must be different.";
     return;
   }
-  x(this, T)?.abort(), I(this, T, new AbortController()), this._isComparing = !0, this._progress = 15, this._selectedItem = null, this._diffFullscreen = !1, this._listScrollTop = 0, this._statusMessage = `Comparing ${this._environmentA} → ${this._environmentB}…`;
+  k(this, L)?.abort(), W(this, L, new AbortController()), this._isComparing = !0, this._progress = 15, this._selectedItem = null, this._diffFullscreen = !1, this._listScrollTop = 0, this._statusMessage = `Comparing ${this._environmentA} → ${this._environmentB}…`;
   const e = window.setInterval(() => {
     this._progress < 85 && (this._progress += 5);
   }, 200);
   try {
-    const t = await Me({
+    const t = await Pe({
       environmentA: this._environmentA,
       environmentB: this._environmentB
     });
-    this._result = t, this._progress = 100, this._statusMessage = `Compared ${t.totalCompared} item(s).`, o(this, s, V).call(this);
+    this._result = t, this._progress = 100, this._statusMessage = `Compared ${t.totalCompared} item(s).`, o(this, s, j).call(this);
   } catch (t) {
     this._progress = 0, this._statusMessage = t instanceof Error ? t.message : "Comparison failed.";
   } finally {
     window.clearInterval(e), this._isComparing = !1;
   }
 };
-D = function(e) {
+V = function(e) {
   return (this._environments.length > 0 ? this._environments : [
     {
       name: "Local",
@@ -856,24 +874,24 @@ D = function(e) {
       isAvailable: !0
     }
   ]).map(
-    (r) => u`
+    (r) => p`
         <option value=${r.name} ?selected=${r.name === e}>
           ${r.displayName}${r.isAvailable ? "" : " (unavailable)"}
         </option>
       `
   );
 };
-y = function(e, t, r) {
-  return u`
+w = function(e, t, r) {
+  return p`
       <div class="summary-card" data-tone=${r}>
         <span class="summary-label">${e}</span>
         <span class="summary-value">${t}</span>
       </div>
     `;
 };
-$ = function(e, t) {
-  const r = this._result ? o(this, s, fe).call(this, e) : null;
-  return u`
+x = function(e, t) {
+  const r = this._result ? o(this, s, be).call(this, e) : null;
+  return p`
       <button
         type="button"
         class="tab ${this._activeTab === e ? "is-active" : ""}"
@@ -881,18 +899,18 @@ $ = function(e, t) {
     this._activeTab = e, this._selectedItem = null, this._listScrollTop = 0;
   }}
       >
-        ${t}${r !== null ? u` <span class="tab-count">${r}</span>` : ""}
+        ${t}${r !== null ? p` <span class="tab-count">${r}</span>` : ""}
       </button>
     `;
 };
-N = function(e, t = 0) {
-  const r = F(e.status), i = Ne[r] ?? "•";
-  return u`
+q = function(e, t = 0) {
+  const r = P(e.status), i = Ke[r] ?? "•";
+  return p`
       <button
         type="button"
         class="result-row status-${r.toLowerCase()} ${this._selectedItem?.id === e.id ? "is-selected" : ""}"
         style=${`--indent:${t}`}
-        @click=${() => o(this, s, _e).call(this, e)}
+        @click=${() => o(this, s, $e).call(this, e)}
       >
         <span class="result-icon" aria-hidden="true">${i}</span>
         <span class="result-status">${r}</span>
@@ -903,14 +921,14 @@ N = function(e, t = 0) {
       </button>
     `;
 };
-$e = function(e, t) {
+Ce = function(e, t) {
   const r = this._expandedPaths.has(e.path), i = e.item;
-  return i ? o(this, s, N).call(this, i, t) : u`
+  return i ? o(this, s, q).call(this, i, t) : p`
       <button
         type="button"
         class="tree-folder"
         style=${`--indent:${t}`}
-        @click=${(n) => o(this, s, be).call(this, e.path, n)}
+        @click=${(n) => o(this, s, we).call(this, e.path, n)}
       >
         <span class="tree-chevron ${r ? "is-open" : ""}" aria-hidden="true">›</span>
         <span class="tree-folder-label">${e.label}</span>
@@ -918,63 +936,63 @@ $e = function(e, t) {
       </button>
     `;
 };
-xe = function(e) {
-  const t = se(
+Te = function(e) {
+  const t = le(
     this._listScrollTop,
     this._listViewportHeight,
     e.length,
-    Ee
+    Fe
   ), r = e.slice(t.start, t.end);
-  return u`
+  return p`
       <div
         class="virtual-scroll"
-        @scroll=${o(this, s, H)}
+        @scroll=${o(this, s, K)}
         role="list"
       >
         <div class="virtual-spacer" style="height:${t.totalHeight}px">
           <div class="virtual-window" style="transform:translateY(${t.offsetTop}px)">
-            ${r.map((i) => o(this, s, N).call(this, i))}
+            ${r.map((i) => o(this, s, q).call(this, i))}
           </div>
         </div>
       </div>
     `;
 };
-ke = function(e) {
-  const t = re(e), r = ie(t, this._expandedPaths);
+Se = function(e) {
+  const t = se(e), r = ae(t, this._expandedPaths);
   if (r.length === 0)
-    return u`<div class="empty"><p>No items to display.</p></div>`;
-  const i = se(
+    return p`<div class="empty"><p>No items to display.</p></div>`;
+  const i = le(
     this._listScrollTop,
     this._listViewportHeight,
     r.length,
-    Ee
+    Fe
   ), n = r.slice(i.start, i.end);
-  return u`
-      <div class="virtual-scroll" @scroll=${o(this, s, H)} role="tree">
+  return p`
+      <div class="virtual-scroll" @scroll=${o(this, s, K)} role="tree">
         <div class="virtual-spacer" style="height:${i.totalHeight}px">
           <div class="virtual-window" style="transform:translateY(${i.offsetTop}px)">
-            ${n.map(({ node: a, depth: l }) => o(this, s, $e).call(this, a, l))}
+            ${n.map(({ node: a, depth: l }) => o(this, s, Ce).call(this, a, l))}
           </div>
         </div>
       </div>
     `;
 };
-Ce = function() {
-  const e = o(this, s, z).call(this);
-  return this._result ? e.length === 0 ? u`
+Ae = function() {
+  const e = o(this, s, B).call(this);
+  return this._result ? e.length === 0 ? p`
         <div class="empty">
           <p>No items match the current tab/filters.</p>
         </div>
-      ` : this._viewMode === "tree" ? o(this, s, ke).call(this, e) : o(this, s, xe).call(this, e) : u`
+      ` : this._activeTab === "content" && this._viewMode === "tree" ? o(this, s, Se).call(this, e) : o(this, s, Te).call(this, e) : p`
         <div class="empty">
           <p>No comparison results yet.</p>
           <p class="hint">Select environments and click Compare.</p>
         </div>
       `;
 };
-Se = function() {
-  const e = o(this, s, ge).call(this);
-  return u`
+Ee = function() {
+  const e = o(this, s, _e).call(this);
+  return p`
       <aside class="filters" aria-label="Filters">
         <h2>Filters</h2>
 
@@ -984,13 +1002,13 @@ Se = function() {
             type="search"
             placeholder="Instant search…"
             .value=${this._search}
-            @input=${o(this, s, ce)}
+            @input=${o(this, s, he)}
           />
         </label>
 
         <label>
           <span>Status</span>
-          <select .value=${this._statusFilter} @change=${o(this, s, pe)}>
+          <select .value=${this._statusFilter} @change=${o(this, s, me)}>
             <option value="">All statuses</option>
             <option value="Identical">Identical</option>
             <option value="Added">Added</option>
@@ -1002,20 +1020,20 @@ Se = function() {
 
         <label>
           <span>Culture</span>
-          <select .value=${this._cultureFilter} @change=${o(this, s, ue)}>
+          <select .value=${this._cultureFilter} @change=${o(this, s, fe)}>
             <option value="">All cultures</option>
             ${e.cultures.map(
-    (t) => u`<option value=${t}>${t}</option>`
+    (t) => p`<option value=${t}>${t}</option>`
   )}
           </select>
         </label>
 
         <label>
           <span>Content type</span>
-          <select .value=${this._contentTypeFilter} @change=${o(this, s, he)}>
+          <select .value=${this._contentTypeFilter} @change=${o(this, s, ge)}>
             <option value="">All types</option>
             ${e.contentTypes.map(
-    (t) => u`<option value=${t}>${t}</option>`
+    (t) => p`<option value=${t}>${t}</option>`
   )}
           </select>
         </label>
@@ -1030,14 +1048,14 @@ Se = function() {
       </aside>
     `;
 };
-Ae = function() {
+Le = function() {
   this._selectedItem && (this._diffFullscreen = !0);
 };
-Te = function() {
+Me = function() {
   this._diffFullscreen = !1;
 };
-O = function(e = !1) {
-  return u`
+H = function(e = !1) {
+  return p`
       <envcompare-diff-panel
         .item=${this._selectedItem}
         .environmentA=${this._environmentA}
@@ -1046,8 +1064,8 @@ O = function(e = !1) {
       ></envcompare-diff-panel>
     `;
 };
-h.styles = [
-  K`
+u.styles = [
+  Q`
       :host {
         display: block;
         color: var(--umb-color-text);
@@ -1627,72 +1645,72 @@ h.styles = [
       }
     `
 ];
-m([
-  f()
-], h.prototype, "_environments", 2);
-m([
-  f()
-], h.prototype, "_environmentA", 2);
-m([
-  f()
-], h.prototype, "_environmentB", 2);
-m([
-  f()
-], h.prototype, "_isComparing", 2);
-m([
-  f()
-], h.prototype, "_isLoadingEnvironments", 2);
-m([
-  f()
-], h.prototype, "_progress", 2);
-m([
-  f()
-], h.prototype, "_statusMessage", 2);
-m([
-  f()
-], h.prototype, "_activeTab", 2);
-m([
-  f()
-], h.prototype, "_viewMode", 2);
-m([
-  f()
-], h.prototype, "_search", 2);
-m([
-  f()
-], h.prototype, "_statusFilter", 2);
-m([
-  f()
-], h.prototype, "_cultureFilter", 2);
-m([
-  f()
-], h.prototype, "_contentTypeFilter", 2);
-m([
-  f()
-], h.prototype, "_result", 2);
-m([
-  f()
-], h.prototype, "_selectedItem", 2);
-m([
-  f()
-], h.prototype, "_expandedPaths", 2);
-m([
-  f()
-], h.prototype, "_listScrollTop", 2);
-m([
-  f()
-], h.prototype, "_listViewportHeight", 2);
-m([
-  f()
-], h.prototype, "_diffPanelWidth", 2);
-m([
-  f()
-], h.prototype, "_diffFullscreen", 2);
-h = m([
-  Y("envcompare-dashboard")
-], h);
-const Xe = h;
+h([
+  m()
+], u.prototype, "_environments", 2);
+h([
+  m()
+], u.prototype, "_environmentA", 2);
+h([
+  m()
+], u.prototype, "_environmentB", 2);
+h([
+  m()
+], u.prototype, "_isComparing", 2);
+h([
+  m()
+], u.prototype, "_isLoadingEnvironments", 2);
+h([
+  m()
+], u.prototype, "_progress", 2);
+h([
+  m()
+], u.prototype, "_statusMessage", 2);
+h([
+  m()
+], u.prototype, "_activeTab", 2);
+h([
+  m()
+], u.prototype, "_viewMode", 2);
+h([
+  m()
+], u.prototype, "_search", 2);
+h([
+  m()
+], u.prototype, "_statusFilter", 2);
+h([
+  m()
+], u.prototype, "_cultureFilter", 2);
+h([
+  m()
+], u.prototype, "_contentTypeFilter", 2);
+h([
+  m()
+], u.prototype, "_result", 2);
+h([
+  m()
+], u.prototype, "_selectedItem", 2);
+h([
+  m()
+], u.prototype, "_expandedPaths", 2);
+h([
+  m()
+], u.prototype, "_listScrollTop", 2);
+h([
+  m()
+], u.prototype, "_listViewportHeight", 2);
+h([
+  m()
+], u.prototype, "_diffPanelWidth", 2);
+h([
+  m()
+], u.prototype, "_diffFullscreen", 2);
+u = h([
+  Z("envcompare-dashboard")
+], u);
+const Ye = u;
 export {
-  h as EnvCompareDashboardElement,
-  Xe as default
+  u as EnvCompareDashboardElement,
+  Ye as default
 };
-//# sourceMappingURL=envcompare-dashboard.element-D0zzy_0_.js.map
+//# sourceMappingURL=envcompare-dashboard.element-CFES_-AX.js.map

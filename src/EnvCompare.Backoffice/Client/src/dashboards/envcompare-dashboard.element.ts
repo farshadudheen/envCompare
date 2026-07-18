@@ -536,9 +536,10 @@ export class EnvCompareDashboardElement extends UmbLitElement {
       `;
     }
 
-    return this._viewMode === "tree"
-      ? this.#renderTreeList(items)
-      : this.#renderVirtualList(items);
+    // Tree view is only meaningful for Content (hierarchical paths).
+    // Media / Settings / Dictionary always render as a flat list.
+    const useTree = this._activeTab === "content" && this._viewMode === "tree";
+    return useTree ? this.#renderTreeList(items) : this.#renderVirtualList(items);
   }
 
   #renderFilters() {
@@ -735,36 +736,40 @@ export class EnvCompareDashboardElement extends UmbLitElement {
               <div class="tree-toolbar">
                 <h2>${this._activeTab}</h2>
                 <span class="result-count">${visibleCount} visible</span>
-                <div class="view-toggle" role="group" aria-label="View mode">
-                  <button
-                    type="button"
-                    class="view-btn ${this._viewMode === "tree" ? "is-active" : ""}"
-                    @click=${() => {
-                      this._viewMode = "tree";
-                      this._listScrollTop = 0;
-                    }}
-                  >
-                    Tree
-                  </button>
-                  <button
-                    type="button"
-                    class="view-btn ${this._viewMode === "list" ? "is-active" : ""}"
-                    @click=${() => {
-                      this._viewMode = "list";
-                      this._listScrollTop = 0;
-                    }}
-                  >
-                    List
-                  </button>
-                </div>
-                ${this._viewMode === "tree"
+                ${this._activeTab === "content"
                   ? html`
-                      <button type="button" class="link-btn" @click=${this.#expandAll}>
-                        Expand all
-                      </button>
-                      <button type="button" class="link-btn" @click=${this.#collapseAll}>
-                        Collapse all
-                      </button>
+                      <div class="view-toggle" role="group" aria-label="View mode">
+                        <button
+                          type="button"
+                          class="view-btn ${this._viewMode === "tree" ? "is-active" : ""}"
+                          @click=${() => {
+                            this._viewMode = "tree";
+                            this._listScrollTop = 0;
+                          }}
+                        >
+                          Tree
+                        </button>
+                        <button
+                          type="button"
+                          class="view-btn ${this._viewMode === "list" ? "is-active" : ""}"
+                          @click=${() => {
+                            this._viewMode = "list";
+                            this._listScrollTop = 0;
+                          }}
+                        >
+                          List
+                        </button>
+                      </div>
+                      ${this._viewMode === "tree"
+                        ? html`
+                            <button type="button" class="link-btn" @click=${this.#expandAll}>
+                              Expand all
+                            </button>
+                            <button type="button" class="link-btn" @click=${this.#collapseAll}>
+                              Collapse all
+                            </button>
+                          `
+                        : ""}
                     `
                   : ""}
               </div>

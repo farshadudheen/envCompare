@@ -11,7 +11,7 @@ const e = [
     alias: "EnvCompare.Dashboard.Compare",
     name: "CloudLens Dashboard",
     elementName: "envcompare-dashboard",
-    element: () => import("./envcompare-dashboard.element-D0zzy_0_.js"),
+    element: () => import("./envcompare-dashboard.element-CFES_-AX.js"),
     weight: 100,
     meta: {
       label: "CloudLens",

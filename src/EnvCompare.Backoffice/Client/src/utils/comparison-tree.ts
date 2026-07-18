@@ -36,6 +36,7 @@ export function buildComparisonTree(items: ComparisonItem[]): TreeNode[] {
     const path = item.path?.trim() || item.id;
     const segments = path.split(",").filter((s) => s.length > 0);
     const depth = Math.max(segments.length, 1);
+    const rowKey = `${item.id}|${item.culture ?? ""}|${item.segment ?? ""}`;
 
     let currentPath = "";
     for (let i = 0; i < depth; i++) {
@@ -63,10 +64,40 @@ export function buildComparisonTree(items: ComparisonItem[]): TreeNode[] {
         }
       } else if (i === depth - 1) {
         const existing = nodes.get(currentPath)!;
-        existing.item = item;
-        existing.label = item.name;
-        existing.id = item.id;
-        existing.statusRank = Math.max(existing.statusRank, rankStatus(item));
+        const existingRowKey = existing.item
+          ? `${existing.item.id}|${existing.item.culture ?? ""}|${existing.item.segment ?? ""}`
+          : null;
+
+        if (existingRowKey === null || existingRowKey === rowKey) {
+          // A folder placeholder created earlier is now backed by its real item.
+          existing.item = item;
+          existing.label = item.name;
+          existing.id = item.id;
+          existing.statusRank = Math.max(existing.statusRank, rankStatus(item));
+        } else {
+          // Distinct items can share a path (e.g. settings items keyed by editor
+          // alias, or the same node compared per culture): add a sibling node
+          // instead of overwriting, so no row is lost in the tree view.
+          const uniquePath = `${currentPath}::${rowKey}`;
+          if (!nodes.has(uniquePath)) {
+            const node: TreeNode = {
+              id: item.id,
+              label: item.name,
+              path: uniquePath,
+              depth: i,
+              item,
+              children: [],
+              statusRank: rankStatus(item),
+            };
+            nodes.set(uniquePath, node);
+
+            if (parentPath) {
+              nodes.get(parentPath)?.children.push(node);
+            } else {
+              roots.push(node);
+            }
+          }
+        }
       }
     }
   }
